@@ -25,7 +25,7 @@ import TUIO.*;
 TuioProcessing tuioClient;
 import ddf.minim.* ;
 Minim minim;
-AudioPlayer au_player1, au_player2 ;
+AudioPlayer au_player1, au_player2, au_player3, au_player4, au_player5, au_player6, au_player7, au_player8, au_player9, au_player10 ;
 // these are some helper variables which are used
 // to create scalable graphical feedback
 float cursor_size = 15;
@@ -57,6 +57,14 @@ void setup()
   minim = new Minim(this) ;
   au_player1 = minim.loadFile("pop.wav") ;
   au_player2 = minim.loadFile("thud.wav") ;
+  au_player3 = minim.loadFile("good_bad_ugly.wav") ;
+  au_player4 = minim.loadFile("C1.wav") ;
+  au_player5 = minim.loadFile("D1.wav") ;
+  au_player6 = minim.loadFile("E1.wav") ;
+  au_player7 = minim.loadFile("F1.wav") ;
+  au_player8 = minim.loadFile("G1.wav") ;
+  au_player9 = minim.loadFile("A1.wav") ;
+  au_player10 = minim.loadFile("B1.wav") ;
 }
 
 void stop()
@@ -116,10 +124,6 @@ void draw()
 
 // called when an object is added to the scene
 void addTuioObject(TuioObject tobj) {
-  if (tobj.getSymbolID() == 3) {
-  au_player1.play() ;
-  au_player2.play() ;
-  }
   println("add object "+tobj.getSymbolID()+" ("+tobj.getSessionID()+") "+tobj.getX()+" "+tobj.getY()+" "+tobj.getAngle());
 }
 
@@ -130,6 +134,36 @@ void removeTuioObject(TuioObject tobj) {
 
 // called when an object is moved
 void updateTuioObject (TuioObject tobj) {
+  if (tobj.getSymbolID() == 4) {
+    if (tobj.getAngle() >= 0 && tobj.getAngle() < 1) {
+      au_player4.rewind() ;
+      au_player4.play() ;
+  }
+    if (tobj.getAngle() >= 1 && tobj.getAngle() < 2) {
+      au_player5.rewind() ;
+      au_player5.play() ;
+  }
+    if (tobj.getAngle() >= 2 && tobj.getAngle() < 3) {
+      au_player6.rewind() ;
+      au_player6.play() ;
+  }
+    if (tobj.getAngle() >= 3 && tobj.getAngle() < 4) {
+      au_player7.rewind() ;
+      au_player7.play() ;
+  }
+    if (tobj.getAngle() >= 4 && tobj.getAngle() < 5) {
+      au_player8.rewind() ;
+      au_player8.play() ;
+  }
+    if (tobj.getAngle() >= 5 && tobj.getAngle() < 6) {
+      au_player9.rewind() ;
+      au_player9.play() ;
+  }
+    if (tobj.getAngle() >= 6 && tobj.getAngle() < 6.2817254) {
+      au_player10.rewind() ;
+      au_player10.play() ;
+  }
+  }
   println("update object "+tobj.getSymbolID()+" ("+tobj.getSessionID()+") "+tobj.getX()+" "+tobj.getY()+" "+tobj.getAngle()
           +" "+tobj.getMotionSpeed()+" "+tobj.getRotationSpeed()+" "+tobj.getMotionAccel()+" "+tobj.getRotationAccel());
 }
