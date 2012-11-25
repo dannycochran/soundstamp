@@ -1,76 +1,67 @@
 /*
-    TUIO processing demo - part of the reacTIVision project
-    http://reactivision.sourceforge.net/
-
-    Copyright (c) 2005-2009 Martin Kaltenbrunner <mkalten@iua.upf.edu>
-
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    StampCifer is an open source project created at Stanford University.
+    
+    We utilize the TUIO processing demo - part of the reacTIVision project
+    http://reactivision.sourceforge.net/, as well as the SoundCipher library.
 */
 
-// we need to import the TUIO library
-// and declare a TuioProcessing client variable
+// import Java ArrayList for handling of music elements class
 import java.util.*;
 import java.util.ArrayList;
 import java.util.List;
 
+// import the TUIO library and declare a TuioProcessing client variable
 import TUIO.*;
 TuioProcessing tuioClient;
-import arb.soundcipher.*;        // simple audio library "SoundCipher"  (tempo=120 bpm)
 
-// these are some helper variables which are used
-// to create scalable graphical feedback
+// simple audio library "SoundCipher"  (tempo=120 bpm)
+import arb.soundcipher.*;        
+
+// these are some helper variables which are used to create scalable graphical feedback
 float cursor_size = 15;
 float object_size = 60;
 float table_size = 760;
 float scale_factor = 1;
 PFont font;
 
+// we use this to dynamically change note duration based on angle delta
 float previous_angle = 0;
 
-//Size of hardware screen devoted to staff music
+// size of hardware screen devoted to staff music
 float x_length = 1;
 float y_length = 1;
 
+// global value for note volume.
 int note_volume = 500;
 
-ArrayList notes_duration = new ArrayList();
+// default values for duration & pitch
 float Default_note_duration = 1;
-double min_duration = (double) 1 / 64; //0.015625
-
-ArrayList notes_pitch = new ArrayList();
 float Default_note_pitch = 60;
 
-ArrayList notes_per_instance = new ArrayList();
+// duration can only drop to a 64th note (0.015625)
+double min_duration = (double) 1 / 64; 
 
-int object_id = 77; //id of fiducial
+// our fiduciary object ID
+int object_id = 77; 
 
+// this is where we store our user's array of sounds
 music_element [] piece;
 
+// this creates a user's music note
 SoundCipher note;
-
 void setup()
 {  
-  //size(screen.width,screen.height);
+  // size(screen.width,screen.height);
   size(640,480);
   noStroke();
   fill(0);
   
+  // set to loop and identify frameRate 
   loop();
   frameRate(30);
-  //noLoop();
+  // noLoop();
   
+  // set font size 
   hint(ENABLE_NATIVE_FONTS);
   font = createFont("Arial", 18);
   scale_factor = height/table_size;
@@ -82,18 +73,12 @@ void setup()
  
   note = new SoundCipher(this);   // sound object for audio feedback
 //  note.playNote(60, 500, 1/4); // pitch number, volume, duration in beats
-  
   piece = new music_element [4];
-  
-  double new_tempo = 120;
-  note.tempo (new_tempo);
-}
 
-/*void stop()
-{
-  minim.stop() ;
-  super.stop() ;
-}*/
+// tempo is 120 by default, but we can set it using this:
+//  double new_tempo = 120;
+//  note.tempo (new_tempo);
+}
 
 // within the draw method we retrieve a Vector (List) of TuioObject and TuioCursor (polling)
 // from the TuioProcessing client and then loop over both lists to draw the graphical feedback.
@@ -103,9 +88,21 @@ void draw()
   textFont(font,18*scale_factor);
   float obj_size = object_size*scale_factor; 
   float cur_size = cursor_size*scale_factor; 
-  
-  rect (23,24,67,67);
-   
+  // draw boxes to represent 12 different notes on a staff
+  rect (20,0,600,40);
+  text ("G",20,0);
+  rect (20,40,600,40);
+  rect (20,80,600,40);
+  rect (20,120,600,40);
+  rect (20,160,600,40);
+  rect (20,200,600,40);
+  rect (20,240,600,40);
+  rect (20,280,600,40);
+  rect (20,320,600,40);
+  rect (20,360,600,40);
+  rect (20,400,600,40);
+  rect (20,440,600,40);
+
   Vector tuioObjectList = tuioClient.getTuioObjects();
   for (int i=0;i<tuioObjectList.size();i++) {
      TuioObject tobj = (TuioObject)tuioObjectList.elementAt(i);
