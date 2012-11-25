@@ -89,8 +89,7 @@ void draw()
   float obj_size = object_size*scale_factor; 
   float cur_size = cursor_size*scale_factor; 
   // draw boxes to represent 12 different notes on a staff
-  rect (20,0,600,40);
-  text ("G",20,0);
+  rect (20,0,600,40);  
   rect (20,40,600,40);
   rect (20,80,600,40);
   rect (20,120,600,40);
@@ -102,7 +101,8 @@ void draw()
   rect (20,360,600,40);
   rect (20,400,600,40);
   rect (20,440,600,40);
-
+  
+  // default TUIO code for retrieving fiduciary markers
   Vector tuioObjectList = tuioClient.getTuioObjects();
   for (int i=0;i<tuioObjectList.size();i++) {
      TuioObject tobj = (TuioObject)tuioObjectList.elementAt(i);
@@ -145,7 +145,8 @@ void draw()
 
 // called when an object is added to the scene
 void addTuioObject(TuioObject tobj) {
-       if (tobj.getSymbolID() == object_id) {
+  // find current angle and set it to previous_angle      
+  if (tobj.getSymbolID() == object_id) {
        previous_angle = tobj.getAngle();
        Scan_notes(tobj);}
 }
@@ -153,12 +154,14 @@ void addTuioObject(TuioObject tobj) {
 // called when an object is removed from the scene
 void removeTuioObject(TuioObject tobj) {
   Default_note_duration = 1;
+  // code should store value in array once removed
   //  println("remove object "+tobj.getSymbolID()+" (" +tobj.getSessionID()+")" + " " + tobj.getMotionSpeed()+" "+tobj.getRotationSpeed());
 }
 
 // called when an object is moved
 void updateTuioObject (TuioObject tobj) {
-       if (tobj.getSymbolID() == object_id) {
+  if (tobj.getSymbolID() == object_id) {
+    // check if angle has moved, if it has, updated it according to rotation direction
     if (tobj.getAngle() > previous_angle + 0.3 || tobj.getAngle() < previous_angle - 0.3) {
       previous_angle = tobj.getAngle();
       if (tobj.getRotationSpeed() < 0 && Default_note_duration > min_duration) {
@@ -232,7 +235,7 @@ int map_pitches(int i)
 
 int checkRegion(TuioObject tobj)
 {
-// loop through the array based on size of array 
+// loop through the array based on size of array, check to see if object already exists 
   int i;
   for(i=0; i < piece.length; i++) {
     if (piece[i].getX() - 0.1 <= tobj.getX() && tobj.getX() <= piece[i].getX() + 0.1) {
