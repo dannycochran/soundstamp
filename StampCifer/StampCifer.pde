@@ -22,6 +22,9 @@
 // we need to import the TUIO library
 // and declare a TuioProcessing client variable
 import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+
 import TUIO.*;
 TuioProcessing tuioClient;
 import arb.soundcipher.*;        // simple audio library "SoundCipher"  (tempo=120 bpm)
@@ -37,17 +40,23 @@ PFont font;
 float previous_angle = 0;
 
 //Size of hardware screen devoted to staff music
-float x_length = 0.9;
+float x_length = 1;
 float y_length = 1;
-
-float note_pitch = 60;
 
 int note_volume = 500;
 
-float note_duration = 1;
-double min_duration = 0.015625;
+ArrayList notes_duration = new ArrayList();
+float Default_note_duration = 1;
+double min_duration = (double) 1 / 64; //0.015625
+
+ArrayList notes_pitch = new ArrayList();
+float Default_note_pitch = 60;
+
+ArrayList notes_per_instance = new ArrayList();
 
 int object_id = 77; //id of fiducial
+
+music_element [] piece;
 
 SoundCipher note;
 
@@ -72,7 +81,9 @@ void setup()
   tuioClient  = new TuioProcessing(this);
  
   note = new SoundCipher(this);   // sound object for audio feedback
-//  sc.playNote(60, 500, 1/4); // pitch number, volume, duration in beats
+//  note.playNote(60, 500, 1/4); // pitch number, volume, duration in beats
+  
+  piece = new music_element [4];
   
   double new_tempo = 120;
   note.tempo (new_tempo);
@@ -144,26 +155,26 @@ void addTuioObject(TuioObject tobj) {
 
 // called when an object is removed from the scene
 void removeTuioObject(TuioObject tobj) {
-  note_duration = 1;
+  Default_note_duration = 1;
   //  println("remove object "+tobj.getSymbolID()+" (" +tobj.getSessionID()+")" + " " + tobj.getMotionSpeed()+" "+tobj.getRotationSpeed());
 }
 
 // called when an object is moved
-void updateTuioObject (TuioObject tobj) {  if (tobj.getSymbolID() == object_id) {
+void updateTuioObject (TuioObject tobj) {
        if (tobj.getSymbolID() == object_id) {
     if (tobj.getAngle() > previous_angle + 0.3 || tobj.getAngle() < previous_angle - 0.3) {
       previous_angle = tobj.getAngle();
-      if (tobj.getRotationSpeed() < 0 && note_duration > min_duration) {
-        note_duration = note_duration/2;
+      if (tobj.getRotationSpeed() < 0 && Default_note_duration > min_duration) {
+        Default_note_duration = Default_note_duration/2;
         Scan_notes(tobj);
-        println("update object at"+ previous_angle + " " + "with duration of " + note_duration);}
-      if (tobj.getRotationSpeed() > 0 && note_duration < 1) {
-        note_duration = note_duration*2;
+        println("update object at"+ previous_angle + " " + "with duration of " + Default_note_duration);}
+      if (tobj.getRotationSpeed() > 0 && Default_note_duration < 1) {
+        Default_note_duration = Default_note_duration*2;
         Scan_notes(tobj);
-        println("update object at"+ previous_angle + " " + "with duration of " + note_duration);}   
+        println("update object at"+ previous_angle + " " + "with duration of " + Default_note_duration);}   
   }
   }
-}}
+}
 
 // called when a cursor is added to the scene
 void addTuioCursor(TuioCursor tcur) {
@@ -189,15 +200,46 @@ void refresh(TuioTime bundleTime) {
 
 void Scan_notes(TuioObject tobj)
 {
-     // look for notes on y-axis by dividing it into 12 categories 
+    // look for notes on y-axis by dividing it into 12 categories 
+   int [] note_pitch = new int [12];
+   int local_note_count = 0;
    for(int i=0; i < 12 ; i++)
 {
   println((i+1) * y_length / 12);
-  if (tobj.getX() >= (i) * y_length / 12 && tobj.getX() < (i+1) * y_length / 12)
+  if (tobj.getY() >= (i) * y_length / 12 && tobj.getY() < (i+1) * y_length / 12)
   {
-     note.playNote(note_pitch + i, note_volume, note_duration);
-     println("played at"+ (i+1) * y_length / 12 + " " + "with duration of " + note_duration);
+     note_pitch[local_note_count]= map_pitches(i);     
+     local_note_count++;
+     note.playNote(Default_note_pitch - i, note_volume, Default_note_duration);
+     println("played at"+ (i+1) * y_length / 12 + " " + "with duration of " + Default_note_duration);
   }
 }  
   }
+  
+int map_pitches(int i)
+{
+     if (i == 0) {return 60;}
+     if (i == 1) {return 62;}
+     if (i == 2) {return 64;}
+     if (i == 3) {return 65;}
+     if (i == 4) {return 67;}
+     if (i == 5) {return 69;}
+     if (i == 6) {return 71;}
+     if (i == 7) {return 72;}
+     if (i == 8) {return 74;}
+     if (i == 9) {return 76;}
+     if (i == 10) {return 77;}
+     if (i == 11) {return 79;}
+     return 0;
+}
 
+int checkRegion(TuioObject tobj)
+{
+// loop through the array based on size of array 
+  int i;
+  for(i=0; i < piece.length; i++) {
+    if (piece[i].getX() - 0.1 <= tobj.getX() && tobj.getX() <= piece[i].getX() + 0.1) {
+      return i;
+  } }
+      return -1;
+}
