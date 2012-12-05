@@ -1,4 +1,4 @@
-/*
+  /*
     StampCifer is an open source project created at Stanford University.
     
     We utilize the TUIO processing demo - part of the reacTIVision project
@@ -18,12 +18,9 @@ TuioProcessing tuioClient;
 import arb.soundcipher.*;
 
 // these are some helper variables which are used to create scalable graphical feedback
-float object_size = 60;
-float table_size = 760;
-float scale_factor = 1;
 PFont font;
-int screen_width = 1024;
-int screen_height = 768;
+int screen_width = 1500;
+int screen_height = 700;
 float width_scaling = (float) screen_width / 640;
 float staff_width = (float) 480 * width_scaling;
 float staff_height = screen_height;
@@ -92,7 +89,7 @@ boolean note_entered = false;
 int second_pitch = 0;
 
 void setup()
-{  
+{   
   // size(screen.height,screen.height);
   size(screen_width,screen_height);
   background(0);
@@ -107,7 +104,6 @@ void setup()
   // set font size 
   hint(ENABLE_NATIVE_FONTS);
   font = createFont("Arial", 18);
-  scale_factor = height/table_size;
   
   // we create an instance of the TuioProcessing client
   // since we add "this" class as an argument the TuioProcessing class expects
@@ -132,31 +128,46 @@ void setup()
 
 }
 
-// check to see if button has been pressed, Play_notes() if it has.
+// check to see if a button has been pressed
 void mousePressed() {
-  if(!(((mouseX > ( buttonX+button_width)) || (mouseY > (buttonY+button_height))) || ((mouseX < buttonX) || (mouseY < buttonY)))) // Play Button
-  { if (menu == 1) {Play_notes(); return;}
-    if (menu == 2) {music_element t = new music_element(1,second_pitch,local_note_duration); piece.add(t); Play_notes(); piece.remove(1);}
+  if(!(((mouseX > ( buttonX+button_width)) || (mouseY > (buttonY + button_height))) || ((mouseX < buttonX) || (mouseY < buttonY)))) // Back Button
+  {menu = 0; piece.clear(); activity_on = false; note_entered = false; wait = false; iterations = 0; }
+  if(!(((mouseX > ( buttonX+button_width)) || (mouseY > (buttonY+ staff_height /8 + button_height))) || ((mouseX < buttonX) || (mouseY < buttonY + staff_height /8)))) // Play Button
+  { if (menu == 1) {noLoop(); Play_notes();}
+    if (menu == 2) {noLoop(); music_element t = new music_element(1,second_pitch,local_note_duration); piece.add(t); Play_notes(); piece.remove(1);}
   }
   if(!(((mouseX > (screen_width / 2 - screen_width / 8 + screen_width / 8)) || (mouseY > (screen_height / 2 - screen_height / 8 + screen_height / 8))) || ((mouseX < screen_width / 2 - screen_width / 8) || (mouseY < screen_height / 2 - screen_height / 8)))) // Compose Button
-  {menu = 1; println (menu); return;}
+  {menu = 1; return;}
   if(!(((mouseX > (screen_width / 2 - screen_width / 13 + screen_width / 8)) || (mouseY > (screen_height / 2 + screen_height / 32 + screen_height / 8))) || ((mouseX < screen_width / 2 - screen_width / 8) || (mouseY < screen_height / 2 + screen_height / 32)))) // Learn Button
   {menu = 2; return;}
   if(!(((mouseX > (screen_width / 2 - screen_width / 8 + screen_width / 8)) || (mouseY > (screen_height / 2 + screen_height / 8 + screen_height / 16 + screen_height / 8))) || ((mouseX < screen_width / 2 - screen_width / 8) || (mouseY < screen_height / 8)))) // Library Button
   {menu = 3; return;}
 }
 
-// within the draw method we retrieve a Vector (List) of TuioObject (polling)
+
+// check to see if a button has been pressed
+void Buttons(TuioObject tobj) {/*
+  if(!(((tobj.getScreenX(screen_width) > ( buttonX+button_width)) || (tobj.getScreenY(screen_height) > (buttonY + button_height))) || ((tobj.getScreenX(screen_width) < buttonX) || (tobj.getScreenY(screen_height) < buttonY)))) // Back Button
+  {menu = 0; piece.clear(); activity_on = false; note_entered = false; wait = false; iterations = 0; }
+  if(!(((tobj.getScreenX(screen_width) > ( buttonX+button_width)) || (tobj.getScreenY(screen_height) > (buttonY+ staff_height /8 + button_height))) || ((tobj.getScreenX(screen_width) < buttonX) || (tobj.getScreenY(screen_height) < buttonY + staff_height /8)))) // Play Button
+  { if (menu == 1) {Play_notes(); return;}
+    if (menu == 2) {music_element t = new music_element(1,second_pitch,local_note_duration); piece.add(t); Play_notes(); piece.remove(1);}
+  }
+  if(!(((tobj.getScreenX(screen_width) > (screen_width / 2 - screen_width / 8 + screen_width / 8)) || (tobj.getScreenY(screen_height) > (screen_height / 2 - screen_height / 8 + screen_height / 8))) || ((tobj.getScreenX(screen_width) < screen_width / 2 - screen_width / 8) || (tobj.getScreenY(screen_height) < screen_height / 2 - screen_height / 8)))) // Compose Button
+  {menu = 1; println (menu); return;}
+  if(!(((tobj.getScreenX(screen_width) > (screen_width / 2 - screen_width / 13 + screen_width / 8)) || (tobj.getScreenY(screen_height) > (screen_height / 2 + screen_height / 32 + screen_height / 8))) || ((tobj.getScreenX(screen_width) < screen_width / 2 - screen_width / 8) || (tobj.getScreenY(screen_height) < screen_height / 2 + screen_height / 32)))) // Learn Button
+  {menu = 2; return;}
+  if(!(((tobj.getScreenX(screen_width) > (screen_width / 2 - screen_width / 8 + screen_width / 8)) || (tobj.getScreenY(screen_height) > (screen_height / 2 + screen_height / 8 + screen_height / 16 + screen_height / 8))) || ((tobj.getScreenX(screen_width) < screen_width / 2 - screen_width / 8) || (tobj.getScreenY(screen_height) < screen_height / 8)))) // Library Button
+  {menu = 3; return;}*/
+}
+
+// within the method we retrieve a Vector (List) of TuioObject (polling)
 // from the TuioProcessing client and then loop over both lists to draw the graphical feedback.
 void draw()
 {
+  println(menu);
   background(0);
-  textFont(font,18*scale_factor);
-  float obj_size = object_size*scale_factor; 
-  
-  // draw boxes to represent 12 different notes on a staff
-  noFill();
-  stroke(30);
+  textFont(font,18);
   
     if (wait == true)
   { iterations++;
@@ -169,6 +180,9 @@ void draw()
   
   if (menu != 0)
 {
+  // draw boxes to represent 12 different notes on a staff
+  noFill();
+  stroke(255);
   for (int i = 0; i < 12; i++)
   {
     float rect_height = (float) staff_height / 12;
@@ -179,18 +193,28 @@ void draw()
   }
   if (menu == 1)
   { 
+    noFill();
+    stroke(255);
     rect (buttonX, buttonY, button_width, button_height, 7);
-    text ("Play", buttonX + button_width * 0.3, buttonY + button_width * 0.3);
- //   rect (buttonX, buttonY + 40, button_width, button_height, 7);
+    rect (buttonX, buttonY + staff_height /8, button_width, button_height, 7);
+    fill(255);
+    text ("Back", buttonX + button_width * 0.3, buttonY + button_width * 0.3);
+    text ("Play", buttonX + button_width * 0.3, buttonY + staff_height /8 + button_width * 0.3);
   }
   
-  noStroke();
-  draw_notes(obj_size);
+  noFill();
+  stroke(255);
+  draw_notes();
   
   if (menu == 2)
-  {
+  { 
+    noFill();
+    stroke(255);
     rect (buttonX, buttonY, button_width, button_height, 7);
-    text ("Play", buttonX + button_width * 0.3, buttonY + button_width * 0.3); 
+    rect (buttonX, buttonY + staff_height /8, button_width, button_height, 7);
+    fill(255);
+    text ("Back", buttonX + button_width * 0.3, buttonY + button_width * 0.3);
+    text ("Play", buttonX + button_width * 0.3, buttonY + staff_height /8 + button_width * 0.3);
     Learn1();
   }
 
@@ -198,6 +222,8 @@ void draw()
  
  if(menu == 0)
   {
+    noFill();
+    stroke(255);
     rect (screen_width / 2 - screen_width / 8, screen_height / 2 + screen_height / 8 + screen_height / 16, screen_width / 8, screen_height / 8, 20);
     text ("Library", screen_width / 2 - screen_width / 8 + screen_width / 23, screen_height / 2 + screen_height / 8 + screen_height / 16 + screen_height / 15);
   
@@ -213,11 +239,12 @@ void draw()
 
 // called when an object is added to the scene
 void addTuioObject(TuioObject tobj) {
+ // draw_notes();
+  Buttons(tobj);
   if (menu == 1)
 {
   // find current angle and set it to previous_angle
-  if (tobj.getSymbolID() == object_id || tobj.getSymbolID() == object_id1 || tobj.getSymbolID() == object_id2 || tobj.getSymbolID() == object_id3 || tobj.getSymbolID() == object_id4) {
-       previous_angle = tobj.getAngle();
+     previous_angle = tobj.getAngle();
        if (checkRegion(tobj) < piece.size()) // the user is manipulating an existing element
             { music_element t;
               t = (music_element) piece.get(checkRegion(tobj));
@@ -236,19 +263,18 @@ void addTuioObject(TuioObject tobj) {
                note.playNote(local_note_pitch, local_note_volume, local_note_duration); // Play note for immediate feedback
                wait = true;
              }
-         } 
-  } }
+         }
   
   if (menu == 2 && piece.size() < 2 && activity_on == true && wait == false)
-{ 
-  if (tobj.getSymbolID() == object_id || tobj.getSymbolID() == object_id1 || tobj.getSymbolID() == object_id2 || tobj.getSymbolID() == object_id3 || tobj.getSymbolID() == object_id4) {
+  { 
        music_element t;
        t = new music_element(1, Scan_notes(tobj), local_note_duration);
        t.add_note(Scan_notes(tobj));
        piece.add(1, t);
        note_entered = true;
        wait = true; 
-  } }
+  }
+}
 }
 
 // called when an object is removed from the scene
@@ -261,10 +287,10 @@ void removeTuioObject(TuioObject tobj) {
 
 // called when an object is moved
 void updateTuioObject (TuioObject tobj) {
- if (menu == 1)
-{ 
-  if (tobj.getSymbolID() == object_id || tobj.getSymbolID() == object_id1 || tobj.getSymbolID() == object_id2 || tobj.getSymbolID() == object_id3 || tobj.getSymbolID() == object_id4) {
-      if (checkRegion(tobj) < piece.size()) // the user is manipulating an existing element
+//  draw_notes();
+  Buttons(tobj);
+  if (menu == 1)
+{  if (checkRegion(tobj) < piece.size()) // the user is manipulating an existing element
       { music_element t; 
         t = (music_element) piece.get(checkRegion(tobj));
         local_note_duration = t.duration;
@@ -352,18 +378,15 @@ void updateTuioObject (TuioObject tobj) {
            }
        }
   }
-}
 
   if (menu == 2 && piece.size() < 2 && activity_on == true && wait == false)
-{ 
-  if (tobj.getSymbolID() == object_id || tobj.getSymbolID() == object_id1 || tobj.getSymbolID() == object_id2 || tobj.getSymbolID() == object_id3 || tobj.getSymbolID() == object_id4) {
-       music_element t;
+{      music_element t;
        t = new music_element(1, Scan_notes(tobj), local_note_duration);
        t.add_note(Scan_notes(tobj));
        piece.add(1, t);
        note_entered = true;
        wait = true;
-  } }
+ }
 }
 
 int Scan_notes(TuioObject tobj)
@@ -381,8 +404,8 @@ int Scan_notes(TuioObject tobj)
   }
   
 void Play_notes()
-{ 
-    // play one musical element at a time
+{ /*
+  // play one musical element at a time
    for(int i=0; i < piece.size() ; i++)
   {
     //temp is a temporary variable used to store the musical elements of the piece 
@@ -398,8 +421,29 @@ void Play_notes()
        note.playChord(chord, temp.volume, temp.duration); }
        
        for(double q=0; q < 100000000; q++){}
-  }  
+  } 
   test();  
+}  */
+ note = new SoundCipher();
+ float [] pitches = new float [piece.size()];
+  double [] durations = new double [piece.size()];
+  double [] volume = new double [piece.size()];
+  // play one musical element at a time
+   for(int i=0; i < piece.size() ; i++)
+  {
+    //temp is a temporary variable used to store the musical elements of the piece 
+    music_element temp = (music_element) piece.get(i);
+    float [] chord = new float [temp.number_of_notes];
+     for (int j=0; j < temp.number_of_notes ; j++)
+      {
+        chord[j] = temp.getPitch(j);
+        durations[i] = temp.duration;
+        volume[i] = temp.volume;
+      }
+      if(temp.number_of_notes == 1){note.score.addNote(i, chord[0], volume[i], durations[i]);}
+        else {note.score.addChord(i, chord, volume[i], durations[i]);}
+      note.score.play(0, 300);
+}
 }
   
 int map_pitches(int i)
@@ -449,7 +493,7 @@ int checkRegion(TuioObject tobj)
 }
 
 // Drawing Functions
-void draw_notes(float obj_size)
+void draw_notes()
 {
   //width
   float partitions_width = staff_width / (piece.size() + 1);
@@ -478,17 +522,19 @@ void draw_notes(float obj_size)
       else {ellipse(x_start, y_start, note_width, note_height);}
     } 
   }
-   // default TUIO code for displaying fiducial markers on the screen
+  
+    // default TUIO code for displaying fiducial markers on the screen
   Vector tuioObjectList = tuioClient.getTuioObjects();
   for (int i=0;i<tuioObjectList.size();i++) {
     TuioObject tobj = (TuioObject)tuioObjectList.elementAt(i);
      stroke(0);
      pushMatrix();
-     translate(tobj.getScreenX(height),tobj.getScreenY(height));
-     rotate(tobj.getAngle());
-     ellipse(-obj_size/2,-obj_size/2,note_width, note_height);
+   //  translate(tobj.getScreenX(height),tobj.getScreenY(height));
+   //  rotate(tobj.getAngle());
+     int visible_width = floor(screen_width * 0.8);
+     ellipse(tobj.getScreenX(visible_width),tobj.getScreenY(screen_height),note_width, note_height);
      popMatrix();
-     text(""+tobj.getSymbolID(), tobj.getScreenX(height), tobj.getScreenY(height));
+   //  text(""+tobj.getSymbolID(), tobj.getScreenX(visible_width), tobj.getScreenY(screen_height));
    }
 }
 
@@ -501,45 +547,43 @@ float regress (float xin, float inmin, float inmax, float outmin, float outmax)
 void Learn1()
 {  
   if (activity_on == false)
-  {   for (int i = 0; i < 70; i ++) {noLoop(); }
+  { //  for (int i = 0; i < 70; i ++) {noLoop(); }
       Random generator = new Random();
       int start_pitch = map_pitches(generator.nextInt(12));
       music_element t; 
       t = new music_element(0, start_pitch, local_note_duration);
       piece.add(t);
-      draw_notes(object_size);
+      draw_notes();
       second_pitch = map_pitches(generator.nextInt(12));
       t = new music_element(0, second_pitch, local_note_duration);
       piece.add(t);
       Play_notes();
       activity_on = true;
       piece.remove(1);
-      noLoop();
   }
   if (note_entered == true)
   {
      music_element t = (music_element) piece.get(1);
       if (t.getPitch(0) == second_pitch)
        {
-         draw_notes(object_size);
+         draw_notes();
          Play_notes();
-         for (int i = 0; i < 70; i ++) {noLoop(); }
+      //   for (int i = 0; i < 200; i ++) {noLoop(); }
          rect(screen_width/2 - 100, screen_height / 2 + 50, 100, 50);
          text("You are correct!", screen_width/2 - 100, screen_height / 2 + 50);
-         for (int i = 0; i < 70; i ++) {noLoop(); }
+      //   for (int i = 0; i < 200; i ++) {noLoop(); }
          piece.clear();
          activity_on = false;
          note_entered = false;
-         noLoop();
        }
       else
        {
-         draw_notes(object_size);
+         draw_notes();
          Play_notes();
-         for (int i = 0; i < 70; i ++) {noLoop(); }
+      //   for (int i = 0; i < 200; i ++) {noLoop(); }
          rect(screen_width/2 - 100, screen_height / 2 + 50, 100, 50);
          text("You are incorrect!", screen_width/2 - 100, screen_height / 2 + 50);
-         for (int i = 0; i < 70; i ++) {noLoop(); }
+      //   for (int i = 0; i < 50000; i ++) {println(i); noLoop(); }
          piece.remove(1);
          note_entered = false;      
        } 
@@ -566,9 +610,9 @@ void removeTuioCursor(TuioCursor tcur) {
 
 // called after each message bundle
 // representing the end of an image frame
-void refresh(TuioTime bundleTime) { 
+/* void refresh(TuioTime bundleTime) { 
   redraw();
-}
+}*/
 
 // Quicksort Sorting Algorithm
 int partition(int arr[], int left, int right) 
@@ -599,7 +643,7 @@ void quickSort(int arr[], int left, int right) {
       quickSort(arr, index, right); 
 }
 
-void test()
+/*void test()
 {
   for (int i=0; i < piece.size(); i++)
   {
@@ -608,4 +652,4 @@ void test()
     { println("Add at " + i + " " + temp.getPitch(j) + " "); }
     println ("\n");
   }
-}
+}*/
