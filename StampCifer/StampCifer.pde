@@ -87,6 +87,8 @@ int menu = 0; // default menu - Homepage
 boolean activity_on = false;
 boolean note_entered = false;
 int second_pitch = 0;
+int start_pitch = 0;
+int entered_pitch = 0;
 
 void setup()
 {   
@@ -133,8 +135,13 @@ void mousePressed() {
   if(!(((mouseX > ( buttonX+button_width)) || (mouseY > (buttonY + button_height))) || ((mouseX < buttonX) || (mouseY < buttonY)))) // Back Button
   {menu = 0; piece.clear(); activity_on = false; note_entered = false; wait = false; iterations = 0; }
   if(!(((mouseX > ( buttonX+button_width)) || (mouseY > (buttonY+ staff_height /8 + button_height))) || ((mouseX < buttonX) || (mouseY < buttonY + staff_height /8)))) // Play Button
-  { if (menu == 1) {noLoop(); Play_notes();}
-    if (menu == 2) {noLoop(); music_element t = new music_element(1,second_pitch,local_note_duration); piece.add(t); Play_notes(); piece.remove(1);}
+  { if (menu == 1) {Play_notes();}
+    if (menu == 2) 
+    {   note = new SoundCipher();
+        note.score.addNote(0, start_pitch, Default_note_volume, Default_note_duration);
+        note.score.addNote(1, second_pitch, Default_note_volume, Default_note_duration);
+        note.score.play(0, 55);
+    }
   }
   if(!(((mouseX > (screen_width / 2 - screen_width / 8 + screen_width / 8)) || (mouseY > (screen_height / 2 - screen_height / 8 + screen_height / 8))) || ((mouseX < screen_width / 2 - screen_width / 8) || (mouseY < screen_height / 2 - screen_height / 8)))) // Compose Button
   {menu = 1; return;}
@@ -165,7 +172,6 @@ void Buttons(TuioObject tobj) {/*
 // from the TuioProcessing client and then loop over both lists to draw the graphical feedback.
 void draw()
 {
-  println(menu);
   background(0);
   textFont(font,18);
   
@@ -239,8 +245,8 @@ void draw()
 
 // called when an object is added to the scene
 void addTuioObject(TuioObject tobj) {
- // draw_notes();
   Buttons(tobj);
+  println(menu + " " + activity_on + " " + wait + " " + piece.size());
   if (menu == 1)
 {
   // find current angle and set it to previous_angle
@@ -264,17 +270,22 @@ void addTuioObject(TuioObject tobj) {
                wait = true;
              }
          }
-  
+}
   if (menu == 2 && piece.size() < 2 && activity_on == true && wait == false)
   { 
-       music_element t;
-       t = new music_element(1, Scan_notes(tobj), local_note_duration);
-       t.add_note(Scan_notes(tobj));
-       piece.add(1, t);
-       note_entered = true;
-       wait = true; 
+        println("I'm here");
+        entered_pitch = Scan_notes(tobj);
+        note = new SoundCipher();
+        note.score.addNote(0, start_pitch, Default_note_volume, Default_note_duration);
+        note.score.addNote(1, entered_pitch, Default_note_volume, Default_note_duration);
+        note.score.play(0, 55);
+        music_element t;
+        t = new music_element(0, entered_pitch, local_note_duration);
+        piece.add(t);
+        draw_notes();
+        note_entered = true;
+        wait = true;
   }
-}
 }
 
 // called when an object is removed from the scene
@@ -287,7 +298,6 @@ void removeTuioObject(TuioObject tobj) {
 
 // called when an object is moved
 void updateTuioObject (TuioObject tobj) {
-//  draw_notes();
   Buttons(tobj);
   if (menu == 1)
 {  if (checkRegion(tobj) < piece.size()) // the user is manipulating an existing element
@@ -380,13 +390,20 @@ void updateTuioObject (TuioObject tobj) {
   }
 
   if (menu == 2 && piece.size() < 2 && activity_on == true && wait == false)
-{      music_element t;
-       t = new music_element(1, Scan_notes(tobj), local_note_duration);
-       t.add_note(Scan_notes(tobj));
-       piece.add(1, t);
-       note_entered = true;
-       wait = true;
- }
+  { 
+        println("I'm here");
+        entered_pitch = Scan_notes(tobj);
+        note = new SoundCipher();
+        note.score.addNote(0, start_pitch, Default_note_volume, Default_note_duration);
+        note.score.addNote(1, entered_pitch, Default_note_volume, Default_note_duration);
+        note.score.play(0, 55);
+        music_element t;
+        t = new music_element(0, entered_pitch, local_note_duration);
+        piece.add(t);
+        draw_notes();
+        note_entered = true;
+        wait = true;
+  }
 }
 
 int Scan_notes(TuioObject tobj)
@@ -549,41 +566,35 @@ void Learn1()
   if (activity_on == false)
   { //  for (int i = 0; i < 70; i ++) {noLoop(); }
       Random generator = new Random();
-      int start_pitch = map_pitches(generator.nextInt(12));
+      start_pitch = map_pitches(generator.nextInt(12));
       music_element t; 
       t = new music_element(0, start_pitch, local_note_duration);
       piece.add(t);
       draw_notes();
       second_pitch = map_pitches(generator.nextInt(12));
-      t = new music_element(0, second_pitch, local_note_duration);
-      piece.add(t);
-      Play_notes();
       activity_on = true;
-      piece.remove(1);
+      note = new SoundCipher();
+      note.score.addNote(0, start_pitch, Default_note_volume, Default_note_duration);
+      note.score.addNote(1, second_pitch, Default_note_volume, Default_note_duration);
+      note.score.play(0, 55);
   }
   if (note_entered == true)
   {
-     music_element t = (music_element) piece.get(1);
-      if (t.getPitch(0) == second_pitch)
-       {
-         draw_notes();
-         Play_notes();
-      //   for (int i = 0; i < 200; i ++) {noLoop(); }
+    if  (entered_pitch == second_pitch)
+       { //   for (int i = 0; i < 200; i ++) {noLoop(); }
          rect(screen_width/2 - 100, screen_height / 2 + 50, 100, 50);
          text("You are correct!", screen_width/2 - 100, screen_height / 2 + 50);
-      //   for (int i = 0; i < 200; i ++) {noLoop(); }
+         for (int i = 0; i < 50000; i ++) { }
          piece.clear();
          activity_on = false;
          note_entered = false;
        }
       else
        {
-         draw_notes();
-         Play_notes();
       //   for (int i = 0; i < 200; i ++) {noLoop(); }
          rect(screen_width/2 - 100, screen_height / 2 + 50, 100, 50);
          text("You are incorrect!", screen_width/2 - 100, screen_height / 2 + 50);
-      //   for (int i = 0; i < 50000; i ++) {println(i); noLoop(); }
+         for (int i = 0; i < 50000; i ++) { }
          piece.remove(1);
          note_entered = false;      
        } 
@@ -610,9 +621,9 @@ void removeTuioCursor(TuioCursor tcur) {
 
 // called after each message bundle
 // representing the end of an image frame
-/* void refresh(TuioTime bundleTime) { 
+void refresh(TuioTime bundleTime) { 
   redraw();
-}*/
+}
 
 // Quicksort Sorting Algorithm
 int partition(int arr[], int left, int right) 
