@@ -92,8 +92,8 @@ int second_pitch = 0;
 int start_pitch = 0;
 int entered_pitch = 0;
 
-//list of CSV files
-String [] csvFiles;
+//list of txt files
+String [] txtFiles;
 
 //shapes
 PShape s;
@@ -105,7 +105,7 @@ void setup()
   background(0);
   noStroke();
   fill(255);
-  
+ 
   // set to loop and identify frameRate 
   loop();
   frameRate(30);
@@ -130,6 +130,16 @@ void setup()
 
 // check to see if a button has been pressed
 void mousePressed() {
+    if (menu == 1) {
+       if(!(((mouseX > ( buttonX+button_width)) || (mouseY > ((staff_height / 8)*2 + button_height))) || ((mouseX < buttonX) || (mouseY < (staff_height / 8)*2)))) // Back Button
+           {writeMusic();}
+       if(!(((mouseX > ( buttonX+button_width)) || (mouseY > ((staff_height / 8)*3 + button_height))) || ((mouseX < buttonX) || (mouseY < (staff_height / 8)*3)))) // Back Button
+           {println("tempo");}
+       if(!(((mouseX > ( buttonX+button_width)) || (mouseY > ((staff_height / 8)*4 + button_height))) || ((mouseX < buttonX) || (mouseY < (staff_height / 8)*4)))) // Back Button
+           {println("inst");}
+        if(!(((mouseX > ( buttonX+button_width)) || (mouseY > ((staff_height / 8)*5 + button_height))) || ((mouseX < buttonX) || (mouseY < (staff_height / 8)*5)))) // Back Button
+           {println("clear");}
+         }        
   if(!(((mouseX > ( buttonX+button_width)) || (mouseY > (buttonY + button_height))) || ((mouseX < buttonX) || (mouseY < buttonY)))) // Back Button
   {menu = 0; piece.clear(); activity_on = false; note_entered = false; wait = false; iterations = 0; }
   if(!(((mouseX > ( buttonX+button_width)) || (mouseY > (buttonY+ staff_height /8 + button_height))) || ((mouseX < buttonX) || (mouseY < buttonY + staff_height /8)))) // Play Button
@@ -141,9 +151,6 @@ void mousePressed() {
         note.score.play(0, 55);
     }
   }
-  if (menu == 1) {
-      println("Hello world");
-  }
   if (menu == 0) {
   if(!(((mouseX > (screen_width / 2 - screen_width / 8 + screen_width / 8)) || (mouseY > (screen_height / 2 - screen_height / 8 + screen_height / 8))) || ((mouseX < screen_width / 2 - screen_width / 8) || (mouseY < screen_height / 2 - screen_height / 8)))) // Compose Button
   {menu = 1; return;}
@@ -154,13 +161,12 @@ void mousePressed() {
   }
   
   if (menu == 3){
-  for (int i = 0; i < csvFiles.length; i++) {
+  for (int i = 0; i < txtFiles.length; i++) {
     if(!(((mouseX > (screen_width / 2 - screen_width / 8 + screen_width / 8)) || (mouseY > ((i*100)+100 + screen_height / 8))) || ((mouseX < screen_width / 2 - screen_width / 8) || (mouseY < (i*100)+100)))) // Open song
-    {menu = 1; readMusic(csvFiles[i]); return;}
+    {menu = 1; readMusic(txtFiles[i]); return;}
   }
   }
 }
-
 
 // check to see if a button has been pressed
 void Buttons(TuioObject tobj) {/*
@@ -262,15 +268,15 @@ void draw()
   
  if(menu == 3)
  { 
-  findCSV();
+  findtxt();
   s = loadShape("delete.svg");
    noFill();
    stroke(255);
    rect (buttonX, buttonY, button_width, button_height, 7);
    fill(255);
    text ("Back", buttonX + button_width * 0.3, buttonY + button_width * 0.3);
-   for (int i = 0; i < csvFiles.length; i++) {
-    String csvParsed = csvFiles[i].replace(".csv","");
+   for (int i = 0; i < txtFiles.length; i++) {
+    String txtParsed = txtFiles[i].replace(".txt","");
     fill(0);
     stroke(255);
     rect (screen_width / 2 - screen_width / 8, (i*100)+100, screen_width / 8, screen_height / 8, 20);
@@ -278,11 +284,11 @@ void draw()
     stroke(255);
     shape (s, screen_width / 2 - screen_width / 8 + 200, (i*100)+110, 50, 50);
     fill(255);
-    text (csvParsed, screen_width / 2 - screen_width / 12, (i*100)+100+screen_height/16);
+    text (txtParsed, screen_width / 2 - screen_width / 12, (i*100)+100+screen_height/16);
    }
-//  call a csv to be played
-//  readMusic("odetojoy.csv");
-//  csvFiles;
+//  call a txt to be played
+//  readMusic("odetojoy.txt");
+//  txtFiles;
 
  }
 }
@@ -722,72 +728,212 @@ void quickSort(int arr[], int left, int right) {
   }
 }*/
 
-//for importing csv files into a 2d array
+//for importing txt files into a 2d array
 void readMusic(String filename) 
   {
   String lines[] = loadStrings(filename);
-  float [][] csv;
-  int csvWidth=0;
+  float [][] txt;
+  int txtWidth=0;
   
-  //calculate max width of csv file
+  //calculate max width of txt file
   for (int i=0; i < lines.length; i++) {
     String [] chars=split(lines[i],',');
-    if (chars.length>csvWidth){
-      csvWidth=chars.length;
+    if (chars.length>txtWidth){
+      txtWidth=chars.length;
     }
   }
   
-  //create csv array based on # of rows and columns in csv file
-  csv = new float [lines.length][csvWidth];
+  //create txt array based on # of rows and columns in txt file
+  txt = new float [lines.length][txtWidth];
   
   //parse values into 2d array
   for (int i=0; i < lines.length; i++) {
     String [] temp = new String [lines.length];
     temp= split(lines[i], ',');
     for (int j=0; j < temp.length; j++){
-     csv[i][j] = new Float(temp[j]); // parse these values to float 
+     txt[i][j] = new Float(temp[j]); // parse these values to float 
     }
   }
   
   //test
   
-  println(csv.length);
-  println(csv[0].length);
+  println(txt.length);
+  println(txt[0].length);
   
-  for (int i = 0; i < csv.length; i++) {
+  for (int i = 0; i < txt.length; i++) {
     music_element t = new music_element();  
-    t.modify_duration(csv[i][1]);
-    if (csv[i][0]==0) { //create rest if first value in row is equal to zero
-        t.create_rest();  
+    t.modify_duration(txt[i][1]);
+    if (txt[i][0]==0) { //create rest if first value in row is equal to zero
+        t.create_rest();
+      piece.add(t);  
       }
-      else { println(csv[i][2]+3);
-       for (int j = 3; j < csv[i][2]+3; j++) { 
-         t.add_note(int(csv[i][j]));
-         println("Runned " + i + " "+ j);
+      else { println(txt[i][2]+3);
+       for (int j = 3; j < txt[i][2]+3; j++) { 
+         t.add_note(int(txt[i][j]));
          piece.add(t);
       }
     }
   } 
 }
-// finds our CSV files to play them back
-void findCSV() 
+// finds our txt files to play them back
+void findtxt() 
 {
 java.io.File folder = new java.io.File(dataPath(""));
  
 // let's set a filter (which returns true if file's extension is .jpg)
-java.io.FilenameFilter csvFilter = new java.io.FilenameFilter() {
+java.io.FilenameFilter txtFilter = new java.io.FilenameFilter() {
   public boolean accept(File dir, String name) {
-    return name.toLowerCase().endsWith(".csv");
+    return name.toLowerCase().endsWith(".txt");
   }
 };
  
 // list the files in the data folder, passing the filter as parameter
-csvFiles = folder.list(csvFilter);
+txtFiles = folder.list(txtFilter);
+}
+
+void writeMusic() {
+  Data data=new Data();
+  // SAVING
+  data.beginSave();
+ for (int i = 0; i < piece.size(); i++) {
+    music_element t = new music_element();
+    float d = t.duration;
+    String temp = Float.toString(d);
+    String musicEntry = Integer.toString(t.volume);
+    musicEntry += ",";
+    musicEntry += temp;
+    if (t.volume != 0)
+    {
+      musicEntry += "," + t.number_of_notes;
+    { for (int j =0 ; j < t.number_of_notes; j++)
+      musicEntry += "," + Integer.toString(t.getPitch(j));
+    }
+    }
+    data.add("musicEntry");
+  }
+  data.endSave(
+    data.getIncrementalFilename(
+      sketchPath("data"+
+        java.io.File.separator+
+        "myMusic ##.txt")));
+}
+
+// DATA CLASS
+
+class Data {
+  ArrayList datalist;
+  String filename,data[];
+  int datalineId;
  
-// get and display the number of jpg files
-//println(filenames.length + " csv files in specified directory");
+  // begin data saving
+  void beginSave() {
+    datalist=new ArrayList();
+  }
  
-// display the filenames
-//for (int i = 0; i < filenames.length; i++) {
-//  println(filenames[i]);
+  void add(String s) {
+    datalist.add(s);
+  }
+ 
+  void add(float val) {
+    datalist.add(""+val);
+  }
+ 
+  void add(int val) {
+    datalist.add(""+val);
+  }
+ 
+  void add(boolean val) {
+    datalist.add(""+val);
+  }
+ 
+  void endSave(String _filename) {
+    filename=_filename;
+ 
+    data=new String[datalist.size()];
+    data=(String [])datalist.toArray(data);
+ 
+    saveStrings(filename, data);
+    println("Saved data to '"+filename+
+      "', "+data.length+" lines.");
+  }
+ 
+  void load(String _filename) {
+    filename=_filename;
+ 
+    datalineId=0;
+    data=loadStrings(filename);
+    println("Loaded data from '"+filename+
+      "', "+data.length+" lines.");
+  }
+ 
+  float readFloat() {
+    return float(data[datalineId++]);
+  }
+ 
+  int readInt() {
+    return int(data[datalineId++]);
+  }
+ 
+  boolean readBoolean() {
+    return boolean(data[datalineId++]);
+  }
+ 
+  String readString() {
+    return data[datalineId++];
+  }
+ 
+  // Utility function to auto-increment filenames
+  // based on filename templates like "name-###.txt" 
+ 
+  public String getIncrementalFilename(String templ) {
+    String s="",prefix,suffix,padstr,numstr;
+    int index=0,first,last,count;
+    File f;
+    boolean ok;
+ 
+    first=templ.indexOf('#');
+    last=templ.lastIndexOf('#');
+    count=last-first+1;
+ 
+    if( (first!=-1)&& (last-first>0)) {
+      prefix=templ.substring(0, first);
+      suffix=templ.substring(last+1);
+ 
+      // Comment out if you want to use absolute paths
+      // or if you're not using this inside PApplet
+      if(sketchPath!=null) prefix=savePath(prefix);
+ 
+      index=0;
+      ok=false;
+ 
+      do {
+        padstr="";
+        numstr=""+index;
+        for(int i=0; i< count-numstr.length(); i++) padstr+="0";
+        s=prefix+padstr+numstr+suffix;
+ 
+        f=new File(s);
+        ok=!f.exists();
+        index++;
+ 
+        // Provide a panic button. If index > 10000 chances are it's an
+        // invalid filename.
+        if(index>10000) ok=true;
+ 
+      }
+      while(!ok);
+ 
+      // Panic button - comment out if you know what you're doing
+      if(index> 10000) {
+        println("getIncrementalFilename thinks there is a problem - "+
+          "Is there  more than 10000 files already in the sequence "+
+          " or is the filename invalid?");
+        println("Returning "+prefix+"ERR"+suffix);
+        return prefix+"ERR"+suffix;
+      }
+    }
+ 
+    return s;
+  }
+ 
 }
