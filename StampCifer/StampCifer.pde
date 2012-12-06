@@ -1,4 +1,4 @@
-  /*
+/*
     StampCifer is an open source project created at Stanford University.
     
     We utilize the TUIO processing demo - part of the reacTIVision project
@@ -98,6 +98,9 @@ void setup()
   noStroke();
   fill(255);
   
+  //read csv files and play them
+  readMusic("odetojoy.csv");
+  
   // set to loop and identify frameRate 
   loop();
   frameRate(30);
@@ -105,7 +108,7 @@ void setup()
   
   // set font size 
   hint(ENABLE_NATIVE_FONTS);
-  font = createFont("Arial", 18);
+  font = loadFont("Lobster1.4-48.vlw");
   
   // we create an instance of the TuioProcessing client
   // since we add "this" class as an argument the TuioProcessing class expects
@@ -173,7 +176,7 @@ void Buttons(TuioObject tobj) {/*
 void draw()
 {
   background(0);
-  textFont(font,18);
+  textFont(font,36);
   
     if (wait == true)
   { iterations++;
@@ -188,7 +191,7 @@ void draw()
 {
   // draw boxes to represent 12 different notes on a staff
   noFill();
-  stroke(255);
+  stroke(50);
   for (int i = 0; i < 12; i++)
   {
     float rect_height = (float) staff_height / 12;
@@ -664,3 +667,51 @@ void quickSort(int arr[], int left, int right) {
     println ("\n");
   }
 }*/
+
+//for importing csv files into a 2d array
+void readMusic(String filename) 
+  {
+  String lines[] = loadStrings(filename);
+  float [][] csv;
+  int csvWidth=0;
+  
+  //calculate max width of csv file
+  for (int i=0; i < lines.length; i++) {
+    String [] chars=split(lines[i],',');
+    if (chars.length>csvWidth){
+      csvWidth=chars.length;
+    }
+  }
+  
+  //create csv array based on # of rows and columns in csv file
+  csv = new float [lines.length][csvWidth];
+  
+  //parse values into 2d array
+  for (int i=0; i < lines.length; i++) {
+    String [] temp = new String [lines.length];
+    temp= split(lines[i], ',');
+    for (int j=0; j < temp.length; j++){
+     csv[i][j] = new Float(temp[j]); // parse these values to float 
+    }
+  }
+  
+  //test
+  
+  println(csv.length);
+  println(csv[0].length);
+  
+  for (int i = 0; i < csv.length; i++) {
+    music_element t = new music_element();  
+    t.modify_duration(csv[i][1]);
+    if (csv[i][0]==0) { //create rest if first value in row is equal to zero
+        t.create_rest();  
+      }
+      else { println(csv[i][2]+3);
+       for (int j = 3; j < csv[i][2]+3; j++) { 
+         t.add_note(int(csv[i][j]));
+         println("Runned " + i + " "+ j);
+         piece.add(t);
+      }
+    }
+  } 
+}
