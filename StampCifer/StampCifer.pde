@@ -1,4 +1,4 @@
-/*
+  /*
     StampCifer is an open source project created at Stanford University.
     
     We utilize the TUIO processing demo - part of the reacTIVision project
@@ -65,6 +65,8 @@ SoundCipher note;
 int local_note_pitch = Default_note_pitch;
 float local_note_duration = Default_note_duration;
 int local_note_volume = Default_note_volume;
+int instrument = 0;
+int tempo = 160;
 
 // List of the notes names
 String [] note_names;
@@ -90,6 +92,12 @@ int second_pitch = 0;
 int start_pitch = 0;
 int entered_pitch = 0;
 
+//list of CSV files
+String [] csvFiles;
+
+//shapes
+PShape s;
+
 void setup()
 {   
   // size(screen.height,screen.height);
@@ -97,9 +105,6 @@ void setup()
   background(0);
   noStroke();
   fill(255);
-  
-  //read csv files and play them
-  readMusic("odetojoy.csv");
   
   // set to loop and identify frameRate 
   loop();
@@ -116,21 +121,11 @@ void setup()
   tuioClient  = new TuioProcessing(this);
  
   note = new SoundCipher(this);   // sound object for audio feedback
-//  note.playNote(60, 500, 1/4); // pitch number, volume, duration in beats
 
   // Set up the names of the notes that will appear on the staff
   note_names = new String [12];
   note_names[0] = "G"; note_names[1] = "F"; note_names[2] = "E"; note_names[3] = "D"; note_names[4] = "C"; note_names[5] = "B"; 
   note_names[6] = "A"; note_names[7] = "G"; note_names[8] = "F"; note_names[9] = "E"; note_names[10] = "D"; note_names[11] = "C";
-
-// tempo is 120 by default, but we can set it using this:
-// double new_tempo = 500;
-// note.tempo (new_tempo);
-
-// instrument is 0 (Grand piano) by default, but we can set it using this:
-//  double new_instrument = 0;
-//  note.instrument (new_instrument);
-
 }
 
 // check to see if a button has been pressed
@@ -138,20 +133,32 @@ void mousePressed() {
   if(!(((mouseX > ( buttonX+button_width)) || (mouseY > (buttonY + button_height))) || ((mouseX < buttonX) || (mouseY < buttonY)))) // Back Button
   {menu = 0; piece.clear(); activity_on = false; note_entered = false; wait = false; iterations = 0; }
   if(!(((mouseX > ( buttonX+button_width)) || (mouseY > (buttonY+ staff_height /8 + button_height))) || ((mouseX < buttonX) || (mouseY < buttonY + staff_height /8)))) // Play Button
-  { if (menu == 1) {Play_notes();}
+  { if (menu == 1) {Play_notes(instrument, tempo, 0);}
     if (menu == 2) 
-    {   note = new SoundCipher();
-        note.score.addNote(0, start_pitch, Default_note_volume, Default_note_duration);
-        note.score.addNote(1, second_pitch, Default_note_volume, Default_note_duration);
+    {   note.score.empty();
+        note.score.addNote(0.2, start_pitch, Default_note_volume, Default_note_duration);
+        note.score.addNote(1.2, second_pitch, Default_note_volume, Default_note_duration);
         note.score.play(0, 55);
     }
   }
+  if (menu == 1) {
+      println("Hello world");
+  }
+  if (menu == 0) {
   if(!(((mouseX > (screen_width / 2 - screen_width / 8 + screen_width / 8)) || (mouseY > (screen_height / 2 - screen_height / 8 + screen_height / 8))) || ((mouseX < screen_width / 2 - screen_width / 8) || (mouseY < screen_height / 2 - screen_height / 8)))) // Compose Button
   {menu = 1; return;}
   if(!(((mouseX > (screen_width / 2 - screen_width / 13 + screen_width / 8)) || (mouseY > (screen_height / 2 + screen_height / 32 + screen_height / 8))) || ((mouseX < screen_width / 2 - screen_width / 8) || (mouseY < screen_height / 2 + screen_height / 32)))) // Learn Button
   {menu = 2; return;}
   if(!(((mouseX > (screen_width / 2 - screen_width / 8 + screen_width / 8)) || (mouseY > (screen_height / 2 + screen_height / 8 + screen_height / 16 + screen_height / 8))) || ((mouseX < screen_width / 2 - screen_width / 8) || (mouseY < screen_height / 8)))) // Library Button
   {menu = 3; return;}
+  }
+  
+  if (menu == 3){
+  for (int i = 0; i < csvFiles.length; i++) {
+    if(!(((mouseX > (screen_width / 2 - screen_width / 8 + screen_width / 8)) || (mouseY > ((i*100)+100 + screen_height / 8))) || ((mouseX < screen_width / 2 - screen_width / 8) || (mouseY < (i*100)+100)))) // Open song
+    {menu = 1; readMusic(csvFiles[i]); return;}
+  }
+  }
 }
 
 
@@ -160,8 +167,8 @@ void Buttons(TuioObject tobj) {/*
   if(!(((tobj.getScreenX(screen_width) > ( buttonX+button_width)) || (tobj.getScreenY(screen_height) > (buttonY + button_height))) || ((tobj.getScreenX(screen_width) < buttonX) || (tobj.getScreenY(screen_height) < buttonY)))) // Back Button
   {menu = 0; piece.clear(); activity_on = false; note_entered = false; wait = false; iterations = 0; }
   if(!(((tobj.getScreenX(screen_width) > ( buttonX+button_width)) || (tobj.getScreenY(screen_height) > (buttonY+ staff_height /8 + button_height))) || ((tobj.getScreenX(screen_width) < buttonX) || (tobj.getScreenY(screen_height) < buttonY + staff_height /8)))) // Play Button
-  { if (menu == 1) {Play_notes(); return;}
-    if (menu == 2) {music_element t = new music_element(1,second_pitch,local_note_duration); piece.add(t); Play_notes(); piece.remove(1);}
+  { if (menu == 1) {Play_notes(instrument, tempo, 0); return;}
+    if (menu == 2) {music_element t = new music_element(1,second_pitch,local_note_duration); piece.add(t); Play_notes(instrument, tempo, 0); piece.remove(1);}
   }
   if(!(((tobj.getScreenX(screen_width) > (screen_width / 2 - screen_width / 8 + screen_width / 8)) || (tobj.getScreenY(screen_height) > (screen_height / 2 - screen_height / 8 + screen_height / 8))) || ((tobj.getScreenX(screen_width) < screen_width / 2 - screen_width / 8) || (tobj.getScreenY(screen_height) < screen_height / 2 - screen_height / 8)))) // Compose Button
   {menu = 1; println (menu); return;}
@@ -176,18 +183,18 @@ void Buttons(TuioObject tobj) {/*
 void draw()
 {
   background(0);
-  textFont(font,36);
+  textFont(font,24);
   
     if (wait == true)
   { iterations++;
-    if (iterations == 40)
+    if (iterations == 80)
     {
       iterations = 0;
       wait = false;
     }
   }
   
-  if (menu != 0)
+  if (menu == 1 || menu == 2)
 {
   // draw boxes to represent 12 different notes on a staff
   noFill();
@@ -206,9 +213,18 @@ void draw()
     stroke(255);
     rect (buttonX, buttonY, button_width, button_height, 7);
     rect (buttonX, buttonY + staff_height /8, button_width, button_height, 7);
+    rect (buttonX, buttonY + (staff_height / 8)*2, button_width, button_height, 7);
+    rect (buttonX, buttonY + (staff_height / 8)*3, button_width, button_height, 7);
+    rect (buttonX, buttonY + (staff_height / 8)*4, button_width, button_height, 7);
+    rect (buttonX, buttonY + (staff_height / 8)*5, button_width, button_height, 7);
+
     fill(255);
     text ("Back", buttonX + button_width * 0.3, buttonY + button_width * 0.3);
     text ("Play", buttonX + button_width * 0.3, buttonY + staff_height /8 + button_width * 0.3);
+    text ("Save", buttonX + button_width * 0.3, buttonY + (staff_height / 8)*2 + button_width * 0.3);
+    text ("Set Tempo", buttonX + button_width * 0.3, buttonY + (staff_height / 8)*3 + button_width * 0.3);
+    text ("Set Instrument", buttonX + button_width * 0.3, buttonY + (staff_height / 8)*4 + button_width * 0.3);
+    text ("Clear", buttonX + button_width * 0.3, buttonY + (staff_height / 8)*5 + button_width * 0.3);
   }
   
   noFill();
@@ -233,15 +249,42 @@ void draw()
   {
     noFill();
     stroke(255);
-    rect (screen_width / 2 - screen_width / 8, screen_height / 2 + screen_height / 8 + screen_height / 16, screen_width / 8, screen_height / 8, 20);
-    text ("Library", screen_width / 2 - screen_width / 8 + screen_width / 23, screen_height / 2 + screen_height / 8 + screen_height / 16 + screen_height / 15);
-  
-    rect (screen_width / 2 - screen_width / 8, screen_height / 2 + screen_height / 32, screen_width / 8, screen_height / 8, 20);
-    text ("Learn", screen_width / 2 - screen_width / 13, screen_height / 2 + screen_width / 30 + screen_height / 32);
-   
+
     rect (screen_width / 2 - screen_width / 8, screen_height / 2 - screen_height / 8, screen_width / 8, screen_height / 8, 20);
     text ("Compose", screen_width / 2 - screen_width / 12, screen_height / 2 - screen_height / 18);
+   
+    rect (screen_width / 2 - screen_width / 8, screen_height / 2 + screen_height / 32, screen_width / 8, screen_height / 8, 20);
+    text ("Learn", screen_width / 2 - screen_width / 13, screen_height / 2 + screen_width / 30 + screen_height / 32);
+    
+    rect (screen_width / 2 - screen_width / 8, screen_height / 2 + screen_height / 8 + screen_height / 16, screen_width / 8, screen_height / 8, 20);
+    text ("Library", screen_width / 2 - screen_width / 8 + screen_width / 23, screen_height / 2 + screen_height / 8 + screen_height / 16 + screen_height / 15);
   }
+  
+ if(menu == 3)
+ { 
+  findCSV();
+  s = loadShape("delete.svg");
+   noFill();
+   stroke(255);
+   rect (buttonX, buttonY, button_width, button_height, 7);
+   fill(255);
+   text ("Back", buttonX + button_width * 0.3, buttonY + button_width * 0.3);
+   for (int i = 0; i < csvFiles.length; i++) {
+    String csvParsed = csvFiles[i].replace(".csv","");
+    fill(0);
+    stroke(255);
+    rect (screen_width / 2 - screen_width / 8, (i*100)+100, screen_width / 8, screen_height / 8, 20);
+    fill(255);
+    stroke(255);
+    shape (s, screen_width / 2 - screen_width / 8 + 200, (i*100)+110, 50, 50);
+    fill(255);
+    text (csvParsed, screen_width / 2 - screen_width / 12, (i*100)+100+screen_height/16);
+   }
+//  call a csv to be played
+//  readMusic("odetojoy.csv");
+//  csvFiles;
+
+ }
 }
 
 // these callback methods are called whenever a TUIO event occurs
@@ -249,7 +292,6 @@ void draw()
 // called when an object is added to the scene
 void addTuioObject(TuioObject tobj) {
   Buttons(tobj);
-  println(menu + " " + activity_on + " " + wait + " " + piece.size());
   if (menu == 1)
 {
   // find current angle and set it to previous_angle
@@ -260,6 +302,7 @@ void addTuioObject(TuioObject tobj) {
                 if (t.pitch_exists (Scan_notes(tobj)) == -1 && t.volume != 0 && wait == false) // if pitch does not exist already and is not a rest
                    { t.add_note(Scan_notes(tobj)); // add new pitch to the element
                      piece.set(checkRegion(tobj), t);
+                     note.instrument (instrument);
                      note.playNote(local_note_pitch, local_note_volume, local_note_duration); // Play note for immediate feedback
                      wait = true;
                     }
@@ -269,18 +312,18 @@ void addTuioObject(TuioObject tobj) {
              { music_element t; 
                t = new music_element(checkRegion(tobj), Scan_notes(tobj), local_note_duration);
                piece.add(t);
+               note.instrument (instrument);
                note.playNote(local_note_pitch, local_note_volume, local_note_duration); // Play note for immediate feedback
                wait = true;
              }
          }
 }
-  if (menu == 2 && piece.size() < 2 && activity_on == true && wait == false)
+  if (menu == 2 && piece.size() < 2 && activity_on == true && wait == false && note_entered == false)
   { 
-        println("I'm here");
         entered_pitch = Scan_notes(tobj);
-        note = new SoundCipher();
-        note.score.addNote(0, start_pitch, Default_note_volume, Default_note_duration);
-        note.score.addNote(1, entered_pitch, Default_note_volume, Default_note_duration);
+        note.score.empty();
+        note.score.addNote(0.2, start_pitch, Default_note_volume, Default_note_duration);
+        note.score.addNote(1.2, entered_pitch, Default_note_volume, Default_note_duration);
         note.score.play(0, 55);
         music_element t;
         t = new music_element(0, entered_pitch, local_note_duration);
@@ -310,7 +353,8 @@ void updateTuioObject (TuioObject tobj) {
         local_note_volume = t.volume;
           if (t.pitch_exists (Scan_notes(tobj)) == -1 && t.volume != 0 && wait == false) // if pitch does not exist already and it is not a rest
              { t.add_note(Scan_notes(tobj)); // add new pitch to the element
-               piece.set(checkRegion(tobj), t); 
+               piece.set(checkRegion(tobj), t);
+               note.instrument (instrument); 
                note.playNote(local_note_pitch, local_note_volume, local_note_duration); // Play note for immediate feedback
                wait = true;
               }
@@ -323,6 +367,7 @@ void updateTuioObject (TuioObject tobj) {
                     { local_note_duration = local_note_duration*2;
                       t.modify_duration(local_note_duration); // change duration of the element
                       piece.set(checkRegion(tobj), t);
+                      note.instrument (instrument);
                       note.playNote(local_note_pitch, local_note_volume, local_note_duration); // Play note for immediate feedback
                       return;
                     }
@@ -331,6 +376,7 @@ void updateTuioObject (TuioObject tobj) {
                     { local_note_duration = (float) local_note_duration / 2;
                       t.modify_duration(local_note_duration); // change duration of the element
                       piece.set(checkRegion(tobj), t);
+                      note.instrument (instrument);
                       note.playNote(local_note_pitch, local_note_volume, local_note_duration); // Play note for immediate feedback
                       return;
                     }
@@ -341,6 +387,7 @@ void updateTuioObject (TuioObject tobj) {
                       local_note_volume = 0;
                       local_note_duration = 1;
                       t.modify_duration(local_note_duration);
+                      piece.set(checkRegion(tobj), t);
                       return;
                     }
                   // Create note from rest
@@ -350,6 +397,7 @@ void updateTuioObject (TuioObject tobj) {
                       t.modify_volume(local_note_volume);
                       local_note_duration = (float) min_duration;
                       t.modify_duration(local_note_duration);
+                      piece.set(checkRegion(tobj), t);
                       return;
                     }
                   // Increase duration of rest
@@ -357,7 +405,6 @@ void updateTuioObject (TuioObject tobj) {
                     { local_note_duration = local_note_duration*2;
                       t.modify_duration(local_note_duration); // change duration of the element
                       piece.set(checkRegion(tobj), t);
-                      note.playNote(local_note_pitch, local_note_volume, local_note_duration); // Play note for immediate feedback
                       return;
                     }
                   // Decrease duration of note
@@ -365,6 +412,7 @@ void updateTuioObject (TuioObject tobj) {
                     { local_note_duration = (float) local_note_duration / 2;
                       t.modify_duration(local_note_duration); // change duration of the element
                       piece.set(checkRegion(tobj), t);
+                      note.instrument (instrument);
                       note.playNote(local_note_pitch, local_note_volume, local_note_duration); // Play note for immediate feedback
                       return;
                     }
@@ -386,19 +434,19 @@ void updateTuioObject (TuioObject tobj) {
            { music_element t; 
              t = new music_element(checkRegion(tobj), Scan_notes(tobj), local_note_duration);
              piece.add(t);
+             note.instrument (instrument);
              note.playNote(local_note_pitch, local_note_volume, local_note_duration); // Play note for immediate feedback
              wait = true;
            }
        }
   }
 
-  if (menu == 2 && piece.size() < 2 && activity_on == true && wait == false)
+  if (menu == 2 && piece.size() < 2 && activity_on == true && wait == false && note_entered == false)
   { 
-        println("I'm here");
         entered_pitch = Scan_notes(tobj);
-        note = new SoundCipher();
-        note.score.addNote(0, start_pitch, Default_note_volume, Default_note_duration);
-        note.score.addNote(1, entered_pitch, Default_note_volume, Default_note_duration);
+        note.score.empty();
+        note.score.addNote(0.2, start_pitch, Default_note_volume, Default_note_duration);
+        note.score.addNote(1.2, entered_pitch, Default_note_volume, Default_note_duration);
         note.score.play(0, 55);
         music_element t;
         t = new music_element(0, entered_pitch, local_note_duration);
@@ -422,8 +470,8 @@ int Scan_notes(TuioObject tobj)
     }
     return -1;  
   }
-  
-void Play_notes()
+
+void Play_notes(int instrument, int tempo, int repeat)
 { /*
   // play one musical element at a time
    for(int i=0; i < piece.size() ; i++)
@@ -444,11 +492,16 @@ void Play_notes()
   } 
   test();  
 }  */
- note = new SoundCipher();
- float [] pitches = new float [piece.size()];
+   note.score.empty();
+   // Set tempo, tempo is 120 by default.
+   note.score.tempo (tempo);
+   // Set instrument, instrument is 0 (Grand piano) by default.
+   note.score.instrument (instrument);
+  
+  float [] pitches = new float [piece.size()];
   double [] durations = new double [piece.size()];
   double [] volume = new double [piece.size()];
-  // play one musical element at a time
+  // play one musical element at a time   
    for(int i=0; i < piece.size() ; i++)
   {
     //temp is a temporary variable used to store the musical elements of the piece 
@@ -460,9 +513,9 @@ void Play_notes()
         durations[i] = temp.duration;
         volume[i] = temp.volume;
       }
-      if(temp.number_of_notes == 1){note.score.addNote(i, chord[0], volume[i], durations[i]);}
-        else {note.score.addChord(i, chord, volume[i], durations[i]);}
-      note.score.play(0, 300);
+    if(temp.number_of_notes == 1){note.score.addNote(i+0.2, chord[0], volume[i], durations[i]);}
+        else {note.score.addChord(i+0.2, chord, volume[i], durations[i]);}
+      note.score.play(repeat, tempo);
 }
 }
   
@@ -576,18 +629,19 @@ void Learn1()
       draw_notes();
       second_pitch = map_pitches(generator.nextInt(12));
       activity_on = true;
-      note = new SoundCipher();
-      note.score.addNote(0, start_pitch, Default_note_volume, Default_note_duration);
-      note.score.addNote(1, second_pitch, Default_note_volume, Default_note_duration);
+      note.score.empty();
+      note.score.addNote(0.2, start_pitch, Default_note_volume, Default_note_duration);
+      note.score.addNote(1.2, second_pitch, Default_note_volume, Default_note_duration);
       note.score.play(0, 55);
   }
   if (note_entered == true)
   {
     if  (entered_pitch == second_pitch)
-       { //   for (int i = 0; i < 200; i ++) {noLoop(); }
-         rect(screen_width/2 - 100, screen_height / 2 + 50, 100, 50);
+       { background(255);
+         stroke(0);
          text("You are correct!", screen_width/2 - 100, screen_height / 2 + 50);
-         for (int i = 0; i < 50000; i ++) { }
+         delay(5000);  
+       //for (int i = 0; i < 50000000; i ++) { }
          piece.clear();
          activity_on = false;
          note_entered = false;
@@ -714,4 +768,26 @@ void readMusic(String filename)
       }
     }
   } 
+}
+// finds our CSV files to play them back
+void findCSV() 
+{
+java.io.File folder = new java.io.File(dataPath(""));
+ 
+// let's set a filter (which returns true if file's extension is .jpg)
+java.io.FilenameFilter csvFilter = new java.io.FilenameFilter() {
+  public boolean accept(File dir, String name) {
+    return name.toLowerCase().endsWith(".csv");
+  }
+};
+ 
+// list the files in the data folder, passing the filter as parameter
+csvFiles = folder.list(csvFilter);
+ 
+// get and display the number of jpg files
+//println(filenames.length + " csv files in specified directory");
+ 
+// display the filenames
+//for (int i = 0; i < filenames.length; i++) {
+//  println(filenames[i]);
 }
