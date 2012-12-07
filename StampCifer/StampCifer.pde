@@ -200,9 +200,9 @@ void mousePressed() {
  
   if (menu == 3){
   for (int i = 0; i < txtFiles.length; i++) {
-    if(!(((mouseX > (screen_width / 2 - screen_width / 8 + screen_width / 8)) || (mouseY > ((i*100)+100 + screen_height / 8))) || ((mouseX < screen_width / 2 - screen_width / 8) || (mouseY < (i*100)+100)))) // Open song
+    if(!(((mouseX > (screen_width / 2 - screen_width / 8 + screen_width /6)) || (mouseY > ((1.3*i*100) + 100 + screen_height / 8))) || ((mouseX < screen_width / 2 - screen_width / 8) || (mouseY < (1.3*i*100) + 100)))) // Open song
     {menu = 1; readMusic(txtFiles[i]); return;}
-    if(!(((mouseX > (screen_width / 2 - screen_width / 8 + 200 + 50)) || (mouseY > ((i*100)+110+50))) || ((mouseX < screen_width / 2 - screen_width / 8 + 200) || (mouseY < (i*100)+110)))) // Open song
+    if(!(((mouseX > (screen_width / 2 - screen_width / 8 + 270 + 50)) || (mouseY > ((1.3*i*100) +120 + 50))) || ((mouseX < screen_width / 2 - screen_width / 8 + 270) || (mouseY < (1.3*i*100) +120)))) // Open song
     {menu = 3; String [] m1 = match((txtFiles[i]), "myMusic");
       if(m1!=null) {
         menu = 3; deleteFile((txtFiles[i])); return;} 
@@ -211,20 +211,49 @@ void mousePressed() {
   }
 }
 
-// check to see if a button has been pressed
-void Buttons(TuioObject tobj) {/*
+// Fiducial version of mousePressed - check to see if a button has been pressed
+void Buttons(TuioObject tobj) {
+    if (menu == 1) {
+       if(!(((tobj.getScreenX(screen_width) > ( buttonX+button_width)) || (tobj.getScreenY(screen_height) > ((staff_height / 8)*2 + button_height))) || ((tobj.getScreenX(screen_width) < buttonX) || (tobj.getScreenY(screen_height) < (staff_height / 8)*2)))) // Back Button
+           {writeMusic();}
+       if(!(((tobj.getScreenX(screen_width) > ( buttonX+button_width)) || (tobj.getScreenY(screen_height) > ((staff_height / 8)*3 + button_height))) || ((tobj.getScreenX(screen_width) < buttonX) || (tobj.getScreenY(screen_height) < (staff_height / 8)*3)))) // Tempo Button
+           {tempo += 20; if(tempo == 500) {tempo = 20;}}
+       if(!(((tobj.getScreenX(screen_width) > ( buttonX+button_width)) || (tobj.getScreenY(screen_height) > ((staff_height / 8)*5 + button_height))) || ((tobj.getScreenX(screen_width) < buttonX) || (tobj.getScreenY(screen_height) < (staff_height / 8)*5)))) // Instrument Button
+           {instrument += 1; if (instrument ==128) {instrument = 0;}}
+        if(!(((tobj.getScreenX(screen_width) > ( buttonX+button_width)) || (tobj.getScreenY(screen_height) > ((staff_height / 8)*7 + button_height))) || ((tobj.getScreenX(screen_width) < buttonX) || (tobj.getScreenY(screen_height) < (staff_height / 8)*7)))) // Clear button
+           {piece.clear();}
+         }        
   if(!(((tobj.getScreenX(screen_width) > ( buttonX+button_width)) || (tobj.getScreenY(screen_height) > (buttonY + button_height))) || ((tobj.getScreenX(screen_width) < buttonX) || (tobj.getScreenY(screen_height) < buttonY)))) // Back Button
-  {menu = 0; piece.clear(); activity_on = false; note_entered = false; wait = false; iterations = 0; }
+  {menu = 0; piece.clear(); activity_on = false; note_entered = false; wait = false; iterations = 0; display_wait = true; iterations2 = 0; instrument = Default_instrument; tempo = Default_tempo; note.score.instrument(instrument); note.score.tempo(tempo);}
   if(!(((tobj.getScreenX(screen_width) > ( buttonX+button_width)) || (tobj.getScreenY(screen_height) > (buttonY+ staff_height /8 + button_height))) || ((tobj.getScreenX(screen_width) < buttonX) || (tobj.getScreenY(screen_height) < buttonY + staff_height /8)))) // Play Button
-  { if (menu == 1) {Play_notes(instrument, tempo, 0); return;}
-    if (menu == 2) {music_element t = new music_element(1,second_pitch,local_note_duration); piece.add(t); Play_notes(instrument, tempo, 0); piece.remove(1);}
+  { if (menu == 1) {Play_notes(instrument, tempo, 0);}
+    if (menu == 2) 
+    {   note.score.empty();
+        note.score.addNote(0.2, start_pitch, Default_note_volume, Default_note_duration);
+        note.score.addNote(1.2, second_pitch, Default_note_volume, Default_note_duration);
+        note.score.play(0, 55);
+    }
   }
-  if(!(((tobj.getScreenX(screen_width) > (screen_width / 2 - screen_width / 8 + screen_width / 8)) || (tobj.getScreenY(screen_height) > (screen_height / 2 - screen_height / 8 + screen_height / 8))) || ((tobj.getScreenX(screen_width) < screen_width / 2 - screen_width / 8) || (tobj.getScreenY(screen_height) < screen_height / 2 - screen_height / 8)))) // Compose Button
+  if (menu == 0) {
+  if(!(((tobj.getScreenX(screen_width) > ((screen_width/2 - screen_width/16) + (screen_width / 8))) || (tobj.getScreenY(screen_height) > ((screen_height/2 - 60 - screen_height/16) + (screen_height / 8)))) || ((tobj.getScreenX(screen_width) < (screen_width/2 - screen_width/16) || (tobj.getScreenY(screen_height) < (screen_height / 2 - 60 - screen_height/16)))))) // Compose Button
   {menu = 1; return;}
-  if(!(((tobj.getScreenX(screen_width) > (screen_width / 2 - screen_width / 13 + screen_width / 8)) || (tobj.getScreenY(screen_height) > (screen_height / 2 + screen_height / 32 + screen_height / 8))) || ((tobj.getScreenX(screen_width) < screen_width / 2 - screen_width / 8) || (tobj.getScreenY(screen_height) < screen_height / 2 + screen_height / 32)))) // Learn Button
+  if(!(((tobj.getScreenX(screen_width) > ((screen_width/2 - screen_width/16) + (screen_width / 8))) || (tobj.getScreenY(screen_height) > ((screen_height/2 + screen_height/8 - 40 - screen_height/16) + (screen_height / 8)))) || ((tobj.getScreenX(screen_width) < (screen_width/2 - screen_width/16) || (tobj.getScreenY(screen_height) < (screen_height / 2 + screen_height/8 - 40 - screen_height/16)))))) // Compose Button
   {menu = 2; return;}
-  if(!(((tobj.getScreenX(screen_width) > (screen_width / 2 - screen_width / 8 + screen_width / 8)) || (tobj.getScreenY(screen_height) > (screen_height / 2 + screen_height / 8 + screen_height / 16 + screen_height / 8))) || ((tobj.getScreenX(screen_width) < screen_width / 2 - screen_width / 8) || (tobj.getScreenY(screen_height) < screen_height / 8)))) // Library Button
-  {menu = 3; return;}*/
+  if(!(((tobj.getScreenX(screen_width) > ((screen_width/2 - screen_width/16) + (screen_width / 8))) || (tobj.getScreenY(screen_height) > ((screen_height/2 + (screen_height/8)*2 - 20 - screen_height/16) + (screen_height / 8)))) || ((tobj.getScreenX(screen_width) < (screen_width/2 - screen_width/16) || (tobj.getScreenY(screen_height) < (screen_height / 2 + (screen_height/8)*2 - 20 - screen_height/16)))))) // Compose Button
+  {menu = 3; return;}
+  }
+
+  if (menu == 3){
+  for (int i = 0; i < txtFiles.length; i++) {
+    if(!(((tobj.getScreenX(screen_width) > (screen_width / 2 - screen_width / 8 + screen_width /6)) || (tobj.getScreenY(screen_height) > ((1.3*i*100) + 100 + screen_height / 8))) || ((tobj.getScreenX(screen_width) < screen_width / 2 - screen_width / 8) || (tobj.getScreenY(screen_height) < (1.3*i*100) + 100)))) // Open song
+    {menu = 1; readMusic(txtFiles[i]); return;}
+    if(!(((tobj.getScreenX(screen_width) > (screen_width / 2 - screen_width / 8 + 270 + 50)) || (tobj.getScreenY(screen_height) > ((1.3*i*100) +120 + 50)) || ((tobj.getScreenX(screen_width) < screen_width / 2 - screen_width / 8 + 270))|| (tobj.getScreenY(screen_height) < (1.3*i*100) +120)))) // Open song
+    {menu = 3; String [] m1 = match((txtFiles[i]), "myMusic");
+      if(m1!=null) {
+        menu = 3; deleteFile((txtFiles[i])); return;} 
+      }   
+    }
+  }
 }
 
 // within the method we retrieve a Vector (List) of TuioObject (polling)
