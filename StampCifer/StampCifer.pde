@@ -9,8 +9,6 @@
 import java.util.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.io.File;
-
 
 // import the TUIO library and declare a TuioProcessing client variable
 import TUIO.*;
@@ -21,14 +19,14 @@ import arb.soundcipher.*;
 
 // these are some helper variables which are used to create scalable graphical feedback
 PFont font;
-int screen_width = (Integer) displayWidth;
-int screen_height = (Integer) displayHeight;
-float width_scaling = (float) screen_width / 640;
-float staff_width = (float) 0.8 * screen_width;
-float staff_height = (float) 0.8 * screen_height;
-float start_increment = (float) 0.10 * screen_width;
-float y_increment = (float) 0.10 * screen_height;
-float names_increment = (float) start_increment / 2;
+int screen_width;
+int screen_height;
+float width_scaling;
+float staff_width;
+float staff_height;
+float start_increment;
+float y_increment;
+float names_increment;
 
 // we use this to dynamically change note duration based on angle delta
 float previous_angle = 0;
@@ -100,6 +98,7 @@ String feedback;
 boolean display_wait = true;
 int iterations2 = 0;
 boolean feedback_wait = false;
+int iterations3 = 0;
 
 //list of txt files
 String [] txtFiles;
@@ -109,12 +108,24 @@ PShape delete;
 PShape logo;
 
 void setup()
-{ 
-// danny code FROM HERE -------
+{   
+  // Set up dimensions
   screen_width = displayWidth;
   screen_height = displayHeight;
   size(screen_width,screen_height);
-// danny code FROM HERE -------
+  width_scaling = (float) screen_width / 640;
+  staff_width = (float) 0.85 * screen_width;
+  staff_height = (float) 0.9 * screen_height;
+  start_increment = (float) 0.25 * screen_width;
+  y_increment = (float) 0.05 * screen_height;
+  names_increment = (float) start_increment / 2;
+  
+  // button for playing music
+  buttonX = (float) 510 * width_scaling; 
+  buttonY = (float) staff_height / 4 / 12;
+  button_width = (float) 30 * width_scaling;
+  button_height = (float) staff_height / 2 / 12;
+
   background(0);
   noStroke();
   fill(255);
@@ -165,14 +176,14 @@ void mousePressed() {
     }
   }
   if (menu == 0) {
-  if(!(((mouseX > (screen_width / 2 - screen_width / 8 + screen_width / 8)) || (mouseY > (screen_height / 2 - screen_height / 8 + screen_height / 8))) || ((mouseX < screen_width / 2 - screen_width / 8) || (mouseY < screen_height / 2 - screen_height / 8)))) // Compose Button
+  if(!(((mouseX > ((screen_width/2 - screen_width/16) + (screen_width / 8))) || (mouseY > ((screen_height/2 - 60 - screen_height/16) + (screen_height / 8)))) || ((mouseX < (screen_width/2 - screen_width/16) || (mouseY < (screen_height / 2 - 60 - screen_height/16)))))) // Compose Button
   {menu = 1; return;}
-  if(!(((mouseX > (screen_width / 2 - screen_width / 13 + screen_width / 8)) || (mouseY > (screen_height / 2 + screen_height / 32 + screen_height / 8))) || ((mouseX < screen_width / 2 - screen_width / 8) || (mouseY < screen_height / 2 + screen_height / 32)))) // Learn Button
+  if(!(((mouseX > ((screen_width/2 - screen_width/16) + (screen_width / 8))) || (mouseY > ((screen_height/2 + screen_height/8 - 40 - screen_height/16) + (screen_height / 8)))) || ((mouseX < (screen_width/2 - screen_width/16) || (mouseY < (screen_height / 2 + screen_height/8 - 40 - screen_height/16)))))) // Compose Button
   {menu = 2; return;}
-  if(!(((mouseX > (screen_width / 2 - screen_width / 8 + screen_width / 8)) || (mouseY > (screen_height / 2 + screen_height / 8 + screen_height / 16 + screen_height / 8))) || ((mouseX < screen_width / 2 - screen_width / 8) || (mouseY < screen_height / 8)))) // Library Button
+  if(!(((mouseX > ((screen_width/2 - screen_width/16) + (screen_width / 8))) || (mouseY > ((screen_height/2 + (screen_height/8)*2 - 20 - screen_height/16) + (screen_height / 8)))) || ((mouseX < (screen_width/2 - screen_width/16) || (mouseY < (screen_height / 2 + (screen_height/8)*2 - 20 - screen_height/16)))))) // Compose Button
   {menu = 3; return;}
   }
-// danny code FROM HERE -------
+ 
   if (menu == 3){
   for (int i = 0; i < txtFiles.length; i++) {
     if(!(((mouseX > (screen_width / 2 - screen_width / 8 + screen_width / 8)) || (mouseY > ((i*100)+100 + screen_height / 8))) || ((mouseX < screen_width / 2 - screen_width / 8) || (mouseY < (i*100)+100)))) // Open song
@@ -185,7 +196,6 @@ void mousePressed() {
     }
   }
 }
-// danny code TO HERE --------
 
 // check to see if a button has been pressed
 void Buttons(TuioObject tobj) {/*
@@ -276,82 +286,83 @@ void draw()
       display_wait = false;
     }
     }
+    if(note_entered == true && feedback_wait == true)
+    {
+      fill(224, 255, 255);
+      rect(0, 0.9* screen_height, screen_width, 0.1 * screen_height);
+      if(entered_pitch == second_pitch)
+        {draw_notes(50, 205, 50); fill(50, 205, 50); text("Correct! You are making amazing progress", screen_width/4, 0.95 * screen_height);}
+      else {draw_notes(255, 30, 0); fill(255, 30, 0); text("Try Again! You will get it next time", screen_width/4, 0.95 * screen_height);}
+      iterations3++;
+      if (iterations3 == 80)
+      {
+        iterations3 = 0;
+        feedback_wait = false;
+      } 
+     }
     if(display_wait == false)
     {
     // draw boxes to represent 12 different notes on a staff
     noFill();
     stroke(50);
+    float rect_y = y_increment;
     for (int i = 0; i < 12; i++)
     {
       float rect_height = (float) staff_height / 12;
-      float rect_y = (float) i * rect_height;
+      rect_y += (float) i * rect_height;
       float note_names_placement = (float) (rect_y + 0.625 * rect_height);
       rect (start_increment, rect_y, staff_width, staff_height / 12);
       text (note_names[i], names_increment, note_names_placement);
+      rect_y -= (float) i * rect_height;
     }
-    if (entered_pitch == second_pitch){
-      {feedback_wait = true;     
-      if (feedback_wait == true)
-      { iterations2++;
-      if (iterations2 == 80)
-      {
-      iterations2 = 0;
-      feedback_wait = false;
-      }
+    Learn1();
     }
-    background(255); 
-    textFont(font,60); 
-    fill(0); 
-    text("Guess what the second note is relative to the first one", staff_width /4, staff_height /8, staff_width /2, staff_height/2);
-  }}
-    Learn1(); 
   }
-}
  
  if(menu == 0)
   {
-    // danny code FROM HERE --------    
     logo = loadShape("SoundStampLogo.svg");
     fill(255);
     shape (logo, 0, 0, screen_width, 206);
-   // danny code to HERE --------    
     noFill();
     stroke(255);
-
-    rect (screen_width / 2 - screen_width / 8, screen_height / 2 - screen_height / 8, screen_width / 8, screen_height / 8, 20);
+    // danny code from here // 
+    rectMode(CENTER);
+    textAlign(CENTER);
+    rect (screen_width/2, screen_height / 2 - 60, screen_width / 8, screen_height / 8, 20);
     fill(150);
-    text ("Compose", screen_width / 2 - screen_width / 12, screen_height / 2 - screen_height / 18);
+    text ("Compose", screen_width / 2, screen_height / 2 - 60 );
     noFill();
+    stroke(255);
     
-    rect (screen_width / 2 - screen_width / 8, screen_height / 2 + screen_height / 32, screen_width / 8, screen_height / 8, 20);
+    rect (screen_width/2, screen_height / 2 + (screen_height/8) - 40, screen_width / 8, screen_height / 8, 20);
+    text ("Learn", screen_width / 2, screen_height / 2 + (screen_height/8)-40);
     
-    text ("Learn", screen_width / 2 - screen_width / 13, screen_height / 2 + screen_width / 30 + screen_height / 32);
-    
-    rect (screen_width / 2 - screen_width / 8, screen_height / 2 + screen_height / 8 + screen_height / 16, screen_width / 8, screen_height / 8, 20);
-    text ("Library", screen_width / 2 - screen_width / 8 + screen_width / 23, screen_height / 2 + screen_height / 8 + screen_height / 16 + screen_height / 15);
+    rect (screen_width/2, screen_height / 2 + (screen_height/8)*2 - 20, screen_width / 8, screen_height / 8, 20);
+    text ("Library", screen_width / 2, screen_height / 2 + (screen_height/8)*2-20);
+    // danny code to here // 
   }
   
  if(menu == 3)
  { 
   findtxt();
   delete = loadShape("delete.svg");
-   noFill();
-   stroke(255);
-   rect (buttonX, buttonY, button_width, button_height, 7);
-   fill(255);
-   text ("Back", buttonX + button_width * 0.3, buttonY + button_width * 0.3);
-   for (int i = 0; i < txtFiles.length; i++) {
-    String txtParsed = txtFiles[i].replace(".txt","");
-    fill(0);
-    stroke(255);
-    rect (screen_width / 2 - screen_width / 8, (i*100)+100, screen_width / 8, screen_height / 8, 20);
-    fill(255);
-    stroke(255);
-    shape (delete, screen_width / 2 - screen_width / 8 + 200, (i*100)+110, 50, 50);
-    fill(255);
-    text (txtParsed, screen_width / 2 - screen_width / 12, (i*100)+100+screen_height/16);
-   }
-
+  noFill();
+  stroke(255);
+  rect (buttonX, buttonY, button_width, button_height, 7);
+  fill(255);
+  text ("Back", buttonX + button_width * 0.3, buttonY + button_width * 0.3);
+  for (int i = 0; i < txtFiles.length; i++) {
+  String txtParsed = txtFiles[i].replace(".txt","");
+  fill(0);
+  stroke(255);
+  rect (screen_width / 2 - screen_width / 8, (i*100)+100, screen_width / 8, screen_height / 8, 20);
+  fill(255);
+  stroke(255);
+  shape (delete, screen_width / 2 - screen_width / 8 + 200, (i*100)+110, 50, 50);
+  fill(255);
+  text (txtParsed, screen_width / 2 - screen_width / 12, (i*100)+100+screen_height/16);
+ }
  }
 }
 
@@ -386,7 +397,7 @@ void addTuioObject(TuioObject tobj) {
              }
          }
 }
-  if (menu == 2 && piece.size() < 2 && activity_on == true && wait == false && note_entered == false && checkRegion(tobj) != -1)
+  if (menu == 2 && piece.size() < 2 && activity_on == true && wait == false && note_entered == false && checkRegion(tobj) != -1 && feedback_wait == false)
   { 
         entered_pitch = Scan_notes(tobj);
         note.score.empty();
@@ -399,6 +410,7 @@ void addTuioObject(TuioObject tobj) {
         draw_notes();
         note_entered = true;
         wait = true;
+        feedback_wait = true;
   }
 }
 
@@ -509,7 +521,7 @@ void updateTuioObject (TuioObject tobj) {
        }
   }
 
-  if (menu == 2 && piece.size() < 2 && activity_on == true && wait == false && note_entered == false && checkRegion(tobj) != -1)
+  if(menu == 2 && piece.size() < 2 && activity_on == true && wait == false && note_entered == false && checkRegion(tobj) != -1 && feedback_wait == false)
   { 
         entered_pitch = Scan_notes(tobj);
         note.score.empty();
@@ -522,6 +534,7 @@ void updateTuioObject (TuioObject tobj) {
         draw_notes();
         note_entered = true;
         wait = true;
+        feedback_wait = true;
   }
 }
 
@@ -533,7 +546,6 @@ int Scan_notes(TuioObject tobj)
       float objcor = (float) regress(tobj.getScreenY(screen_height), y_increment, y_increment + staff_height, 0, 1) / yregion;
       int objregion = floor(objcor); // index of region where the object is
       local_note_pitch = map_pitches(objregion);
-      println (objregion);
       return local_note_pitch;
    }
     return -1;  
@@ -627,17 +639,23 @@ int checkRegion(TuioObject tobj)
   if(tobj.getScreenX(screen_width) >= start_increment && tobj.getScreenX(screen_width) <= start_increment + staff_width)
   {
     int partitions = piece.size() + 1; // screen is divided by number of music elements in the piece plus an empty region to add an additional element
+    println(partitions);
     float xregion = (float) staff_width / screen_width / partitions; // size of the equal regions in x coordinates
     float objcor = (float) regress(tobj.getScreenX(screen_width), start_increment, start_increment + staff_width, 0, 1) / xregion;
     int objregion = floor(objcor); // index of region where the object is
+    println("At "+ tobj.getScreenX(screen_width) + " and Region is " + objregion);
     return objregion;
   }
-  else { return -1;}
+  else { println("Not found"); return -1;}
 }
 
 // Drawing Functions
 void draw_notes()
+{draw_notes(255, 255, 255);}
+
+void draw_notes(int R, int G, int B)
 {
+  noStroke();
   //width
   float partitions_width = staff_width / (piece.size() + 1);
   float note_width = (float) partitions_width / 2;
@@ -653,13 +671,13 @@ void draw_notes()
   {
     float pos0 = invregress(i, start_increment, start_increment + staff_width, 0, 1);
     float pos1 = invregress(i+1, start_increment, start_increment + staff_width, 0, 1);
-    float center = (pos0 + pos1) / 2; 
+    float center = (pos0 + pos1) / 2;
     //temp is a temporary variable used to store the musical elements of the piece 
     music_element temp = (music_element) piece.get(i);
     float x_start = partitions_width * i + x_increment;
     for (int j=0; j < temp.number_of_notes; j++)
     {
-      fill(255);
+      fill(R, G, B);
       note_width = (float) partitions_width * temp.duration / 2;
       note_height = (float) partitions_height * temp.duration / 2;
       float y_start = partitions_height * remap_pitches(temp.getPitch(j)) + y_increment;
@@ -712,26 +730,17 @@ void Learn1()
   }
   if (note_entered == true)
   {
-    if  (entered_pitch == second_pitch)
+    if  (entered_pitch == second_pitch && feedback_wait == false)
        { background(255);
          stroke(0);
-         feedback = "Correct!";
-         text(feedback, screen_width/2 - 100, screen_height / 2 + 50);
-         delay(5000);  
-       //for (int i = 0; i < 50000000; i ++) { }
          piece.clear();
          activity_on = false;
          note_entered = false;
        }
-      else
+    if  (entered_pitch != second_pitch && feedback_wait == false)
        {
-      //   for (int i = 0; i < 200; i ++) {noLoop(); }
-         rect(screen_width/2 - 100, screen_height / 2 + 50, 100, 50);
-         feedback = "Try Again!";
-         text(feedback, screen_width/2 - 100, screen_height / 2 + 50);
-         for (int i = 0; i < 50000; i ++) { }
          piece.remove(1);
-         note_entered = false;      
+         note_entered = false;  
        } 
   }
 }
@@ -1002,7 +1011,7 @@ class Data {
   }
  
 }
-// danny code FROM HERE --------
+
 void deleteFile(String filename) {
   String txtFile = dataPath(filename);
   File file = sketchFile(txtFile);
@@ -1010,4 +1019,3 @@ void deleteFile(String filename) {
   println(file);
   boolean success = file.delete();
 }
-// danny code TO HERE --------
