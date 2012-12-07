@@ -10,12 +10,18 @@ import java.util.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import processing.serial.*;
+
+import cc.arduino.*;
+
 // import the TUIO library and declare a TuioProcessing client variable
 import TUIO.*;
 TuioProcessing tuioClient;
 
 // simple audio library "SoundCipher"  (tempo=120 bpm)
 import arb.soundcipher.*;
+
+Arduino arduino;
 
 // these are some helper variables which are used to create scalable graphical feedback
 PFont font;
@@ -81,7 +87,7 @@ float button_width = (float) 30 * width_scaling;
 float button_height = (float) staff_height / 2 / 12;
 
 // used to limit the amount of notes added
-boolean wait = false;
+boolean wait = true;
 int iterations = 0;
 
 //moving the screen
@@ -106,7 +112,9 @@ String [] txtFiles;
 //shapes
 PShape delete;
 PShape logo;
-PShape notes;
+PShape restNote;
+PShape soundNote;
+PShape rotateKnob;
 
 void setup()
 {   
@@ -151,6 +159,11 @@ void setup()
   note_names = new String [12];
   note_names[0] = "G"; note_names[1] = "F"; note_names[2] = "E"; note_names[3] = "D"; note_names[4] = "C"; note_names[5] = "B"; 
   note_names[6] = "A"; note_names[7] = "G"; note_names[8] = "F"; note_names[9] = "E"; note_names[10] = "D"; note_names[11] = "C";
+  
+    arduino = new Arduino(this, Arduino.list()[1], 57600);
+  
+  for (int i = 0; i <= 13; i++)
+    arduino.pinMode(i, Arduino.INPUT);
 }
 
 // check to see if a button has been pressed
@@ -218,17 +231,20 @@ void Buttons(TuioObject tobj) {/*
 // from the TuioProcessing client and then loop over both lists to draw the graphical feedback.
 void draw()
 {
+    Vector tuioObjectList = tuioClient.getTuioObjects();
+  if (tuioObjectList.size() != 0) { if (arduino.digitalRead(7) == Arduino.HIGH) {wait = false;}}
+   println(wait);
   background(0);
   textFont(font,24);
   
-    if (wait == true)
-  { iterations++;
-    if (iterations == 80)
-    {
-      iterations = 0;
-      wait = false;
-    }
-  }
+//    if (wait == true)
+//  { iterations++;
+//    if (iterations == 80)
+//    {
+//      iterations = 0;
+//      wait = false;
+//    }
+//  }
   
   if (menu == 1)
 {
@@ -236,6 +252,7 @@ void draw()
   noFill();
   stroke(100);
   float rect_y = y_increment;
+  rotateKnob = loadShape("rotateKnob.svg");
   for (int i = 0; i < 12; i++)
   {
     float rect_height = (float) staff_height / 12;
@@ -250,8 +267,8 @@ void draw()
     rect (buttonX, buttonY, button_width, button_height, 7);
     rect (buttonX, buttonY + staff_height /8, button_width, button_height, 7);
     rect (buttonX, buttonY + (staff_height / 8)*2, button_width, button_height, 7);
-    rect (buttonX, buttonY + (staff_height / 8)*3, button_width, button_height, 7);
-    rect (buttonX, buttonY + (staff_height / 8)*5, button_width, button_height, 7);
+    shape (rotateKnob, buttonX, buttonY + (staff_height / 8)*3.5, button_width/2, button_width/2);
+    shape (rotateKnob, buttonX, buttonY + (staff_height / 8)*5.5, button_width/2, button_width/2);
     rect (buttonX, buttonY + (staff_height / 8)*7, button_width, button_height, 7);
 
     fill(255);
@@ -259,7 +276,9 @@ void draw()
     text ("Play", buttonX + button_width * 0.1, buttonY + staff_height /8 + button_width * 0.2);
     text ("Save", buttonX + button_width * 0.1, buttonY + (staff_height / 8)*2 + button_width * 0.2);
     text ("Set Tempo", buttonX + button_width * 0.1, buttonY + (staff_height / 8)*3 + button_width * 0.2);
-    text ("Set Instrument", buttonX + button_width * 0.1, buttonY + (staff_height / 8)*5 + button_width * 0.2);
+    text (Integer.toString(tempo), buttonX + button_width * 0.1, buttonY + (staff_height / 8)*4.2 + button_width * 0.2);
+    text ("Set Instrument", buttonX + button_width * 0.1, buttonY + (staff_height / 8)*5.0 + button_width * 0.2);
+    text (map_Instruments(instrument), buttonX + button_width * 0.1, buttonY + (staff_height / 8)*6.2 + button_width * 0.2);
     text ("Clear", buttonX + button_width * 0.1, buttonY + (staff_height / 8)*7 + button_width * 0.2);
   }
   
@@ -355,12 +374,12 @@ void draw()
   String txtParsed = txtFiles[i].replace(".txt","");
   fill(0);
   stroke(255);
-  rect (screen_width / 2 - screen_width / 8, (i*100)+100, screen_width / 8, screen_height / 8, 20);
+  rect (screen_width / 2 - screen_width / 8, (1.3*i*100) + 100, screen_width / 6, screen_height / 8, 20);
   fill(255);
   stroke(255);
-  shape (delete, screen_width / 2 - screen_width / 8 + 200, (i*100)+110, 50, 50);
+  shape (delete, screen_width / 2 - screen_width / 8 + 270, (1.3*i*100) +120, 50, 50);
   fill(255);
-  text (txtParsed, screen_width / 2 - screen_width / 12, (i*100)+100+screen_height/16);
+  text (txtParsed, screen_width / 2 - screen_width / 9, (1.3*i*100)+100+screen_height/16);
  }
  }
 }
@@ -517,8 +536,33 @@ void updateTuioObject (TuioObject tobj) {
              note.playNote(local_note_pitch, local_note_volume, local_note_duration); // Play note for immediate feedback
              wait = true;
            }
-       }
-  }
+         if(!(((tobj.getScreenX(screen_width) > (buttonX+button_width/2)) || (tobj.getScreenY(screen_height) > (buttonY + (staff_height / 8)*3.5 + button_width/2))) || ((tobj.getScreenX(screen_width) < buttonX) || (tobj.getScreenY(screen_height) < buttonY + (staff_height / 8)*3.5)))) // Set instrument button
+         { if (tobj.getAngle() > previous_angle + 0.2 || tobj.getAngle() < previous_angle - 0.2) 
+              {   previous_angle = tobj.getAngle();
+                  if (tobj.getRotationSpeed() > 0) 
+                    { instrument += 1; if (instrument < 127) {instrument = 127;}}
+              }
+          if (tobj.getAngle() > previous_angle + 0.2 || tobj.getAngle() < previous_angle - 0.2) 
+            {   previous_angle = tobj.getAngle();
+                if (tobj.getRotationSpeed() < 0) 
+                  { instrument -= 1; if (instrument < 0) {instrument = 0;}}
+            }
+         }       
+         
+         if(!(((tobj.getScreenX(screen_width) > (buttonX+button_width/2)) || (tobj.getScreenY(screen_height) > (buttonY + (staff_height / 8)*5.5 + button_width/2))) || ((tobj.getScreenX(screen_width) < buttonX) || (tobj.getScreenY(screen_height) < buttonY + (staff_height / 8)*5.5)))) // Set tempo button
+         { if (tobj.getAngle() > previous_angle + 0.2 || tobj.getAngle() < previous_angle - 0.2) 
+              {   previous_angle = tobj.getAngle();
+                  if (tobj.getRotationSpeed() > 0) 
+                    {tempo += 20; if (tempo > 500) {tempo = 500;}}
+              }
+          if (tobj.getAngle() > previous_angle + 0.2 || tobj.getAngle() < previous_angle - 0.2) 
+            {   previous_angle = tobj.getAngle();
+                if (tobj.getRotationSpeed() < 0) 
+                  {tempo -= 20; if (tempo < 20) {tempo = 20;}}
+            }
+         }
+       }      
+  }   
 
   if(menu == 2 && piece.size() < 2 && activity_on == true && wait == false && note_entered == false && checkRegion(tobj) != -1 && feedback_wait == false)
   { 
@@ -541,14 +585,15 @@ int Scan_notes(TuioObject tobj)
 {
   if (tobj.getScreenY(screen_height) >= y_increment && tobj.getScreenY(screen_height) <= y_increment + staff_height)  
    { // look for notes on y-axis by dividing it into 12 categories 
-      float yregion = (float) staff_height / screen_height / 12; // size of the equal regions in y coordinates
-      float objcor = (float) regress(tobj.getScreenY(screen_height), y_increment, y_increment + staff_height, 0, 1) / yregion;
-      int objregion = floor(objcor); // index of region where the object is
+      float yregion = (float) staff_height / 12; // size of the equal regions in y coordinates
+      float objcor = (float) tobj.getScreenY(screen_height) - y_increment; //yregion;
+      float objpartition = (float) objcor / yregion;
+      int objregion = floor(objpartition); // index of region where the object is
       local_note_pitch = map_pitches(objregion);
       return local_note_pitch;
    }
     return -1;  
-  }
+}
 
 void Play_notes(int instrument, int tempo, int repeat)
 { /*
@@ -632,28 +677,164 @@ int remap_pitches(int p)
      return 6;
 }
 
+String map_Instruments(int p)
+{
+     p-= 1;
+     if (p == 128) {return "Gunshot";}
+     if (p == 127) {return "Applause";}
+     if (p == 126) {return "Helicopter";}
+     if (p == 125) {return "Telephone Ring";}
+     if (p == 124) {return "Bird Tweet";}
+     if (p == 123) {return "Seashore";}
+     if (p == 122) {return "Breath Noise";}
+     if (p == 121) {return "Guitar Fret Noise";}
+     if (p == 120) {return "Reverse Cymbal";}
+     if (p == 119) {return "Synth Drum";}
+     if (p == 118) {return "Melodic Tom";}
+     if (p == 117) {return "Taiko Drum";}
+     if (p == 116) {return "Woodblock";}
+     if (p == 115) {return "Steel Drums";}
+     if (p == 114) {return "Agogo";}
+     if (p == 113) {return "Tinkle Bell";}
+     if (p == 112) {return "Shanai";}
+     if (p == 111) {return "Fiddle";}
+     if (p == 110) {return "Bag pipe";}
+     if (p == 109) {return "Kalimba";}
+     if (p == 108) {return "Koto";}
+     if (p == 107) {return "Shamisen";}
+     if (p == 106) {return "Banjo";}
+     if (p == 105) {return "Sitar";}
+     if (p == 104) {return "FX 8 (sci-fi)";}
+     if (p == 103) {return "FX 7 (echoes)";}
+     if (p == 102) {return "FX 6 (goblins)";}
+     if (p == 101) {return "FX 5 (brightness)";}
+     if (p == 100) {return "FX 4 (atmosphere)";}
+     if (p == 99) {return "FX 3 (crystal)";}
+     if (p == 98) {return "FX 2 (soundtrack)";}
+     if (p == 97) {return "FX 1 (rain)";}
+     if (p == 96) {return "Pad 8 (sweep)";}
+     if (p == 95) {return "Pad 7 (halo)";}
+     if (p == 94) {return "Pad 6 (metallic)";}
+     if (p == 93) {return "Pad 5 (bowed)";}
+     if (p == 92) {return "Pad 4 (choir)";}
+     if (p == 91) {return "Pad 3 (polysynth)";}
+     if (p == 90) {return "Pad 2 (warm)";}
+     if (p == 89) {return "Pad 1 (new age)";}
+     if (p == 88) {return "Lead 8 (fifths)";}
+     if (p == 87) {return "Lead 7 (fifths)";}
+     if (p == 86) {return "Lead 6 (voice)";}
+     if (p == 85) {return "Lead 5 (charang)";}
+     if (p == 84) {return "Lead 4 (chiff)";}
+     if (p == 83) {return "Lead 3 (callipoe)";}
+     if (p == 82) {return "Lead 2 (sawtooth)";}
+     if (p == 81) {return "Lead 1 (square)";}
+     if (p == 80) {return "Ocarina";}
+     if (p == 79) {return "Whistle";}
+     if (p == 78) {return "Shakuhachi";}
+     if (p == 77) {return "Blown Bottle";}
+     if (p == 76) {return "Pan Flute";}
+     if (p == 75) {return "Recorder";}
+     if (p == 74) {return "Flute";}
+     if (p == 73) {return "Piccolo";}
+     if (p == 72) {return "Clarinet";}
+     if (p == 71) {return "Bassoon";}
+     if (p == 70) {return "English Horn";}
+     if (p == 69) {return "Oboe";}
+     if (p == 68) {return "Baritone Sax";}
+     if (p == 67) {return "Tenor Sax";}
+     if (p == 66) {return "Alto Sax";}
+     if (p == 65) {return "SopranoSax";}
+     if (p == 64) {return "SynthBrass 2"; }
+     if (p == 63) {return "SynthBrass 1";}
+     if (p == 62) {return "Brass Section";}
+     if (p == 61) {return "French Horn";}
+     if (p == 60) {return "Muted Trumpet";}
+     if (p == 59) {return "Tuba";}
+     if (p == 58) {return "Trombone";}
+     if (p == 57) {return "Trumpet";}
+     if (p == 56) {return "Orchestra Hit";}
+     if (p == 55) {return "Synth Voice";}
+     if (p == 54) {return "Voice Oohs";}
+     if (p == 53) {return "Choir Aahs";}
+     if (p == 52) {return "SynthStrings 2";}
+     if (p == 51) {return "SynthStrings 1";}
+     if (p == 50) {return "String Ensemble 2";}
+     if (p == 1) {return "Acoustic Grand Piano";}
+     if (p == 2) {return "Bright Acoustic Piano";}
+     if (p == 3) {return "Electric Grand Piano";}
+     if (p == 4) {return "Honky-tonk Piano";}
+     if (p == 5) {return "Electric Piano 1";}
+     if (p == 6) {return "Electric Piano 2";}
+     if (p == 7) {return "Harpsichord";}
+     if (p == 8) {return "Clavi";}
+     if (p == 9) {return "Celesta";}
+     if (p == 10) {return "Glockenspiel";}
+     if (p == 11) {return "Music Box";}
+     if (p == 12) {return "Vibraphone";}
+     if (p == 13) {return "Marimba";}
+     if (p == 14) {return "Xylophone";}
+     if (p == 15) {return "Tubular Bells";}
+     if (p == 16) {return "Dulcimer";}
+     if (p == 17) {return "Drawbar Organ";}
+     if (p == 18) {return "Percussive Organ";}
+     if (p == 19) {return "Rock Organ";}
+     if (p == 20) {return "Church Organ";}
+     if (p == 21) {return "Reed Organ";}
+     if (p == 22) {return "Accordion";}
+     if (p == 23) {return "Harmonica";}
+     if (p == 24) {return "Tango Accordion";}
+     if (p == 25) {return "Acoustic Guitar (nylon)";}
+     if (p == 26) {return "Acoustic Guitar (steel)";}
+     if (p == 27) {return "Electric Guitar (jazz)";}
+     if (p == 28) {return "Electric Guitar (clean)";}
+     if (p == 29) {return "Electric Guitar (muted)";}
+     if (p == 30) {return "Overdriven Guitar";}
+     if (p == 31) {return "Distortion Guitar";}
+     if (p == 32) {return "Guitar Harmonics";}
+     if (p == 33) {return "Acoustic Bass";}
+     if (p == 34) {return "Electric Bass (finger)";}
+     if (p == 35) {return "Electric Bass (pick)";}
+     if (p == 36) {return "Frestless Bass";}
+     if (p == 37) {return "Slap Bass 1";}
+     if (p == 38) {return "Slap Bass 2";}
+     if (p == 39) {return "Synth Bass 1";}
+     if (p == 40) {return "Synth Bass 2";}
+     if (p == 41) {return "Violin";}
+     if (p == 42) {return "Viola";}
+     if (p == 43) {return "Cello";}
+     if (p == 44) {return "Contrabass";}
+     if (p == 45) {return "Tremolo Strings";}
+     if (p == 46) {return "Pizzicato Strings";}
+     if (p == 47) {return "Orchestral Harp";}
+     if (p == 48) {return "Timpani";}
+     if (p == 49) {return "String Ensemble 1";}
+     return "Acoustic Grand Piano";
+}
+
 int checkRegion(TuioObject tobj)
 {
-  // check in which region of the screen the object is in 
+// check in which region of the screen the object is in 
   if(tobj.getScreenX(screen_width) >= start_increment && tobj.getScreenX(screen_width) <= start_increment + staff_width)
   {
     int partitions = piece.size() + 1; // screen is divided by number of music elements in the piece plus an empty region to add an additional element
     println(partitions);
-    float xregion = (float) staff_width / screen_width / partitions; // size of the equal regions in x coordinates
-    float objcor = (float) regress(tobj.getScreenX(screen_width), start_increment, start_increment + staff_width, 0, 1) / xregion;
-    int objregion = floor(objcor); // index of region where the object is
-   // println("At "+ tobj.getScreenX(screen_width) + " and Region is " + objregion);
+    float xregion = (float) staff_width / partitions; // size of the equal regions in x coordinates
+    float objcor = (float) tobj.getScreenX(screen_width) - start_increment;
+    float objpartition = (float) objcor / xregion;
+    int objregion = floor(objpartition); // index of region where the object is
+    println("At "+ tobj.getScreenX(screen_width) + " and Region is " + objregion);
     return objregion;
   }
-  else { println("Not found"); return -1;}
+  else { return -1;}
 }
 
-// Drawing Functions
+// Drawing Functions 
 void draw_notes()
 {draw_notes(255, 255, 255);}
-
 void draw_notes(int R, int G, int B)
 {
+  soundNote = loadShape("soundNote.svg");
+  restNote = loadShape("restNote.svg");
   noStroke();
   //width
   float partitions_width = staff_width / (piece.size() + 1);
@@ -681,8 +862,8 @@ void draw_notes(int R, int G, int B)
       note_height = (float) partitions_height * temp.duration / 2;
       float y_start = partitions_height * remap_pitches(temp.getPitch(j)) + y_increment;
       if (temp.volume == 0)
-        {rect(x_start, y_start, note_width, note_height);}
-      else {ellipse(x_start, y_start, note_width, note_height);}
+        {shape(restNote,x_start, y_start, note_width, note_height);}
+      else {shape(soundNote,x_start, y_start, note_width, note_height);}
     } 
   }
     // default TUIO code for displaying fiducial markers on the screen
