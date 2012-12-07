@@ -19,13 +19,14 @@ import arb.soundcipher.*;
 
 // these are some helper variables which are used to create scalable graphical feedback
 PFont font;
-int screen_width = 1500;
+int screen_width = 1200;
 int screen_height = 700;
 float width_scaling = (float) screen_width / 640;
-float staff_width = (float) 480 * width_scaling;
-float staff_height = screen_height;
-float start_increment = (float) 20 * width_scaling;
-float names_increment = (float) 5 * width_scaling;
+float staff_width = (float) 0.8 * screen_width;
+float staff_height = (float) 0.8 * screen_height;
+float start_increment = (float) 0.10 * screen_width;
+float y_increment = (float) 0.10 * screen_height;
+float names_increment = (float) start_increment / 2;
 
 // we use this to dynamically change note duration based on angle delta
 float previous_angle = 0;
@@ -38,6 +39,8 @@ float ywidth = 1;
 float Default_note_duration = 1;
 int Default_note_pitch = 60;
 int Default_note_volume = 500;
+int Default_instrument = 0;
+int Default_tempo = 160;
 
 // duration can only drop to an 8th note (0.125)
 float min_duration = (float) 1 / 8; 
@@ -65,8 +68,8 @@ SoundCipher note;
 int local_note_pitch = Default_note_pitch;
 float local_note_duration = Default_note_duration;
 int local_note_volume = Default_note_volume;
-int instrument = 0;
-int tempo = 160;
+int instrument = Default_instrument;
+int tempo = Default_tempo;
 
 // List of the notes names
 String [] note_names;
@@ -91,6 +94,10 @@ boolean note_entered = false;
 int second_pitch = 0;
 int start_pitch = 0;
 int entered_pitch = 0;
+String feedback;
+boolean display_wait = true;
+int iterations2 = 0;
+boolean feedback_wait = false;
 
 //list of txt files
 String [] txtFiles;
@@ -134,14 +141,14 @@ void mousePressed() {
        if(!(((mouseX > ( buttonX+button_width)) || (mouseY > ((staff_height / 8)*2 + button_height))) || ((mouseX < buttonX) || (mouseY < (staff_height / 8)*2)))) // Back Button
            {writeMusic();}
        if(!(((mouseX > ( buttonX+button_width)) || (mouseY > ((staff_height / 8)*3 + button_height))) || ((mouseX < buttonX) || (mouseY < (staff_height / 8)*3)))) // Back Button
-           {println("tempo");}
+           {tempo += 20; if(tempo == 500) {tempo = 20;}}
        if(!(((mouseX > ( buttonX+button_width)) || (mouseY > ((staff_height / 8)*4 + button_height))) || ((mouseX < buttonX) || (mouseY < (staff_height / 8)*4)))) // Back Button
-           {println("inst");}
+           {instrument += 1; if (instrument ==128) {instrument = 0;}}
         if(!(((mouseX > ( buttonX+button_width)) || (mouseY > ((staff_height / 8)*5 + button_height))) || ((mouseX < buttonX) || (mouseY < (staff_height / 8)*5)))) // Back Button
-           {println("clear");}
+           {piece.clear();}
          }        
   if(!(((mouseX > ( buttonX+button_width)) || (mouseY > (buttonY + button_height))) || ((mouseX < buttonX) || (mouseY < buttonY)))) // Back Button
-  {menu = 0; piece.clear(); activity_on = false; note_entered = false; wait = false; iterations = 0; }
+  {menu = 0; piece.clear(); activity_on = false; note_entered = false; wait = false; iterations = 0; display_wait = true; iterations2 = 0; instrument = Default_instrument; tempo = Default_tempo; note.score.instrument(instrument); note.score.tempo(tempo);}
   if(!(((mouseX > ( buttonX+button_width)) || (mouseY > (buttonY+ staff_height /8 + button_height))) || ((mouseX < buttonX) || (mouseY < buttonY + staff_height /8)))) // Play Button
   { if (menu == 1) {Play_notes(instrument, tempo, 0);}
     if (menu == 2) 
@@ -177,7 +184,7 @@ void Buttons(TuioObject tobj) {/*
     if (menu == 2) {music_element t = new music_element(1,second_pitch,local_note_duration); piece.add(t); Play_notes(instrument, tempo, 0); piece.remove(1);}
   }
   if(!(((tobj.getScreenX(screen_width) > (screen_width / 2 - screen_width / 8 + screen_width / 8)) || (tobj.getScreenY(screen_height) > (screen_height / 2 - screen_height / 8 + screen_height / 8))) || ((tobj.getScreenX(screen_width) < screen_width / 2 - screen_width / 8) || (tobj.getScreenY(screen_height) < screen_height / 2 - screen_height / 8)))) // Compose Button
-  {menu = 1; println (menu); return;}
+  {menu = 1; return;}
   if(!(((tobj.getScreenX(screen_width) > (screen_width / 2 - screen_width / 13 + screen_width / 8)) || (tobj.getScreenY(screen_height) > (screen_height / 2 + screen_height / 32 + screen_height / 8))) || ((tobj.getScreenX(screen_width) < screen_width / 2 - screen_width / 8) || (tobj.getScreenY(screen_height) < screen_height / 2 + screen_height / 32)))) // Learn Button
   {menu = 2; return;}
   if(!(((tobj.getScreenX(screen_width) > (screen_width / 2 - screen_width / 8 + screen_width / 8)) || (tobj.getScreenY(screen_height) > (screen_height / 2 + screen_height / 8 + screen_height / 16 + screen_height / 8))) || ((tobj.getScreenX(screen_width) < screen_width / 2 - screen_width / 8) || (tobj.getScreenY(screen_height) < screen_height / 8)))) // Library Button
@@ -200,21 +207,21 @@ void draw()
     }
   }
   
-  if (menu == 1 || menu == 2)
+  if (menu == 1)
 {
   // draw boxes to represent 12 different notes on a staff
   noFill();
   stroke(50);
+  float rect_y = y_increment;
   for (int i = 0; i < 12; i++)
   {
     float rect_height = (float) staff_height / 12;
-    float rect_y = (float) i * rect_height;
+    rect_y += (float) i * rect_height;
     float note_names_placement = (float) (rect_y + 0.625 * rect_height);
     rect (start_increment, rect_y, staff_width, staff_height / 12);
     text (note_names[i], names_increment, note_names_placement);
+    rect_y -= (float) i * rect_height;
   }
-  if (menu == 1)
-  { 
     noFill();
     stroke(255);
     rect (buttonX, buttonY, button_width, button_height, 7);
@@ -246,10 +253,48 @@ void draw()
     fill(255);
     text ("Back", buttonX + button_width * 0.3, buttonY + button_width * 0.3);
     text ("Play", buttonX + button_width * 0.3, buttonY + staff_height /8 + button_width * 0.3);
-    Learn1();
+    instrument = Default_instrument;
+    tempo = Default_tempo;
+    if (activity_on == false) {background(255); textFont(font,60); fill(0); text("Guess what the second note is relative to the first one", staff_width /4, staff_height /8, staff_width /2, staff_height/2);}
+    if (display_wait == true)
+    { iterations2++;
+    if (iterations2 == 80)
+    {
+      iterations2 = 0;
+      display_wait = false;
+    }
+    }
+    if(display_wait == false)
+    {
+    // draw boxes to represent 12 different notes on a staff
+    noFill();
+    stroke(50);
+    for (int i = 0; i < 12; i++)
+    {
+      float rect_height = (float) staff_height / 12;
+      float rect_y = (float) i * rect_height;
+      float note_names_placement = (float) (rect_y + 0.625 * rect_height);
+      rect (start_increment, rect_y, staff_width, staff_height / 12);
+      text (note_names[i], names_increment, note_names_placement);
+    }
+    if (entered_pitch == second_pitch){
+      {feedback_wait = true;     
+      if (feedback_wait == true)
+      { iterations2++;
+      if (iterations2 == 80)
+      {
+      iterations2 = 0;
+      feedback_wait = false;
+      }
+    }
+    background(255); 
+    textFont(font,60); 
+    fill(0); 
+    text("Guess what the second note is relative to the first one", staff_width /4, staff_height /8, staff_width /2, staff_height/2);
+  }}
+    Learn1(); 
   }
-
- }
+}
  
  if(menu == 0)
   {
@@ -286,9 +331,6 @@ void draw()
     fill(255);
     text (txtParsed, screen_width / 2 - screen_width / 12, (i*100)+100+screen_height/16);
    }
-//  call a txt to be played
-//  readMusic("odetojoy.txt");
-//  txtFiles;
 
  }
 }
@@ -302,7 +344,7 @@ void addTuioObject(TuioObject tobj) {
 {
   // find current angle and set it to previous_angle
      previous_angle = tobj.getAngle();
-       if (checkRegion(tobj) < piece.size()) // the user is manipulating an existing element
+       if (checkRegion(tobj) < piece.size() && checkRegion(tobj) != -1) // the user is manipulating an existing element
             { music_element t;
               t = (music_element) piece.get(checkRegion(tobj));
                 if (t.pitch_exists (Scan_notes(tobj)) == -1 && t.volume != 0 && wait == false) // if pitch does not exist already and is not a rest
@@ -314,7 +356,7 @@ void addTuioObject(TuioObject tobj) {
                     }
              } 
         else // the user is adding a new element
-         { if (Scan_notes(tobj) != -1 && wait == false) 
+         { if (Scan_notes(tobj) != -1 && wait == false && checkRegion(tobj) != -1) 
              { music_element t; 
                t = new music_element(checkRegion(tobj), Scan_notes(tobj), local_note_duration);
                piece.add(t);
@@ -324,7 +366,7 @@ void addTuioObject(TuioObject tobj) {
              }
          }
 }
-  if (menu == 2 && piece.size() < 2 && activity_on == true && wait == false && note_entered == false)
+  if (menu == 2 && piece.size() < 2 && activity_on == true && wait == false && note_entered == false && checkRegion(tobj) != -1)
   { 
         entered_pitch = Scan_notes(tobj);
         note.score.empty();
@@ -352,7 +394,7 @@ void removeTuioObject(TuioObject tobj) {
 void updateTuioObject (TuioObject tobj) {
   Buttons(tobj);
   if (menu == 1)
-{  if (checkRegion(tobj) < piece.size()) // the user is manipulating an existing element
+{  if (checkRegion(tobj) < piece.size() && checkRegion(tobj) != -1) // the user is manipulating an existing element
       { music_element t; 
         t = (music_element) piece.get(checkRegion(tobj));
         local_note_duration = t.duration;
@@ -436,7 +478,7 @@ void updateTuioObject (TuioObject tobj) {
            } 
          }
       else // the user is adding a new element
-       { if (Scan_notes(tobj) != -1 && wait == false) 
+       { if (Scan_notes(tobj) != -1 && wait == false && checkRegion(tobj) != -1) 
            { music_element t; 
              t = new music_element(checkRegion(tobj), Scan_notes(tobj), local_note_duration);
              piece.add(t);
@@ -447,7 +489,7 @@ void updateTuioObject (TuioObject tobj) {
        }
   }
 
-  if (menu == 2 && piece.size() < 2 && activity_on == true && wait == false && note_entered == false)
+  if (menu == 2 && piece.size() < 2 && activity_on == true && wait == false && note_entered == false && checkRegion(tobj) != -1)
   { 
         entered_pitch = Scan_notes(tobj);
         note.score.empty();
@@ -465,15 +507,15 @@ void updateTuioObject (TuioObject tobj) {
 
 int Scan_notes(TuioObject tobj)
 {
-    // look for notes on y-axis by dividing it into 12 categories 
-   for(int i=0; i < 12 ; i++)
-    {
-      if (tobj.getY() >= (i) * ywidth / 12 && tobj.getY() < (i+1) * ywidth / 12)
-      {
-         local_note_pitch = map_pitches(i);
-         return local_note_pitch;
-      }
-    }
+  if (tobj.getScreenY(screen_height) >= y_increment && tobj.getScreenY(screen_height) <= y_increment + staff_height)  
+   { // look for notes on y-axis by dividing it into 12 categories 
+      float yregion = (float) staff_height / screen_height / 12; // size of the equal regions in y coordinates
+      float objcor = (float) regress(tobj.getScreenY(screen_height), y_increment, y_increment + staff_height, 0, 1) / yregion;
+      int objregion = floor(objcor); // index of region where the object is
+      local_note_pitch = map_pitches(objregion);
+      println (objregion);
+      return local_note_pitch;
+   }
     return -1;  
   }
 
@@ -562,13 +604,15 @@ int remap_pitches(int p)
 int checkRegion(TuioObject tobj)
 {
 // check in which region of the screen the object is in 
-  int partitions = piece.size() + 1; // screen is divided by number of music elements in the piece plus an empty region to add an additional element
-  float xregion = (float) staff_width / screen_width / partitions; // size of the equal regions in x coordinates
-  float objcor = (float) regress(tobj.getX(), 0.1, 0.9, 0, 1) / xregion;
-  int objregion = floor(objcor); // index of region where the object is
-  if (objregion >= partitions) {objregion = piece.size();} //making sure the object is within bounds
-  if (objregion < 0) {objregion = 0;} //making sure the object is within bounds
-  return objregion;
+  if(tobj.getScreenX(screen_width) >= start_increment && tobj.getScreenX(screen_width) <= start_increment + staff_width)
+  {
+    int partitions = piece.size() + 1; // screen is divided by number of music elements in the piece plus an empty region to add an additional element
+    float xregion = (float) staff_width / screen_width / partitions; // size of the equal regions in x coordinates
+    float objcor = (float) regress(tobj.getScreenX(screen_width), start_increment, start_increment + staff_width, 0, 1) / xregion;
+    int objregion = floor(objcor); // index of region where the object is
+    return objregion;
+  }
+  else { return -1;}
 }
 
 // Drawing Functions
@@ -587,6 +631,9 @@ void draw_notes()
   
   for (int i=0; i < piece.size(); i++)
   {
+    float pos0 = invregress(i, start_increment, start_increment + staff_width, 0, 1);
+    float pos1 = invregress(i+1, start_increment, start_increment + staff_width, 0, 1);
+    float center = (pos0 + pos1) / 2; 
     //temp is a temporary variable used to store the musical elements of the piece 
     music_element temp = (music_element) piece.get(i);
     float x_start = partitions_width * i + x_increment;
@@ -601,7 +648,6 @@ void draw_notes()
       else {ellipse(x_start, y_start, note_width, note_height);}
     } 
   }
-  
     // default TUIO code for displaying fiducial markers on the screen
   Vector tuioObjectList = tuioClient.getTuioObjects();
   for (int i=0;i<tuioObjectList.size();i++) {
@@ -620,6 +666,10 @@ void draw_notes()
 float regress (float xin, float inmin, float inmax, float outmin, float outmax)
  { 
    return ((xin - inmin) * ((outmax - outmin) / (inmax - inmin)) + outmin) ;}
+   
+float invregress (float yin, float inmin, float inmax, float outmin, float outmax)
+ { 
+   return ((yin - outmin) * ((inmax - inmin) / (outmax - outmin)) + inmin) ;}
    
    
 // Learning Activities
@@ -645,7 +695,8 @@ void Learn1()
     if  (entered_pitch == second_pitch)
        { background(255);
          stroke(0);
-         text("You are correct!", screen_width/2 - 100, screen_height / 2 + 50);
+         feedback = "Correct!";
+         text(feedback, screen_width/2 - 100, screen_height / 2 + 50);
          delay(5000);  
        //for (int i = 0; i < 50000000; i ++) { }
          piece.clear();
@@ -656,7 +707,8 @@ void Learn1()
        {
       //   for (int i = 0; i < 200; i ++) {noLoop(); }
          rect(screen_width/2 - 100, screen_height / 2 + 50, 100, 50);
-         text("You are incorrect!", screen_width/2 - 100, screen_height / 2 + 50);
+         feedback = "Try Again!";
+         text(feedback, screen_width/2 - 100, screen_height / 2 + 50);
          for (int i = 0; i < 50000; i ++) { }
          piece.remove(1);
          note_entered = false;      
@@ -755,24 +807,18 @@ void readMusic(String filename)
     }
   }
   
-  //test
-  
-  println(txt.length);
-  println(txt[0].length);
-  
-  for (int i = 0; i < txt.length; i++) {
+  for (int i = 0; i < txt.length; i++) 
+  {
     music_element t = new music_element();  
     t.modify_duration(txt[i][1]);
     if (txt[i][0]==0) { //create rest if first value in row is equal to zero
         t.create_rest();
-      piece.add(t);  
       }
-      else { println(txt[i][2]+3);
-       for (int j = 3; j < txt[i][2]+3; j++) { 
-         t.add_note(int(txt[i][j]));
-         piece.add(t);
+    else 
+      { 
+       for (int j = 3; j < txt[i][2]+3; j++) { t.add_note(int(txt[i][j]));}
       }
-    }
+    piece.add(t);
   } 
 }
 // finds our txt files to play them back
@@ -796,20 +842,19 @@ void writeMusic() {
   // SAVING
   data.beginSave();
  for (int i = 0; i < piece.size(); i++) {
-    music_element t = new music_element();
+    music_element t = (music_element) piece.get(i);
+    String v = "";
+    if (t.volume != 0) {v = "1";} else {v = "0";}
     float d = t.duration;
     String temp = Float.toString(d);
-    String musicEntry = Integer.toString(t.volume);
-    musicEntry += ",";
-    musicEntry += temp;
+    String musicEntry = v + "," + temp;
     if (t.volume != 0)
     {
       musicEntry += "," + t.number_of_notes;
     { for (int j =0 ; j < t.number_of_notes; j++)
-      musicEntry += "," + Integer.toString(t.getPitch(j));
+      musicEntry += "," + Integer.toString(t.getPitch(j)); }
     }
-    }
-    data.add("musicEntry");
+    data.add(musicEntry);
   }
   data.endSave(
     data.getIncrementalFilename(
