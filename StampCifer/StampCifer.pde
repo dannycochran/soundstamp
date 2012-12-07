@@ -9,6 +9,8 @@
 import java.util.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.File;
+
 
 // import the TUIO library and declare a TuioProcessing client variable
 import TUIO.*;
@@ -19,8 +21,8 @@ import arb.soundcipher.*;
 
 // these are some helper variables which are used to create scalable graphical feedback
 PFont font;
-int screen_width = 1200;
-int screen_height = 700;
+int screen_width = (Integer) displayWidth;
+int screen_height = (Integer) displayHeight;
 float width_scaling = (float) screen_width / 640;
 float staff_width = (float) 0.8 * screen_width;
 float staff_height = (float) 0.8 * screen_height;
@@ -103,12 +105,16 @@ boolean feedback_wait = false;
 String [] txtFiles;
 
 //shapes
-PShape s;
+PShape delete;
+PShape logo;
 
 void setup()
-{   
-  // size(screen.height,screen.height);
+{ 
+// danny code FROM HERE -------
+  screen_width = displayWidth;
+  screen_height = displayHeight;
   size(screen_width,screen_height);
+// danny code FROM HERE -------
   background(0);
   noStroke();
   fill(255);
@@ -166,14 +172,20 @@ void mousePressed() {
   if(!(((mouseX > (screen_width / 2 - screen_width / 8 + screen_width / 8)) || (mouseY > (screen_height / 2 + screen_height / 8 + screen_height / 16 + screen_height / 8))) || ((mouseX < screen_width / 2 - screen_width / 8) || (mouseY < screen_height / 8)))) // Library Button
   {menu = 3; return;}
   }
-  
+// danny code FROM HERE -------
   if (menu == 3){
   for (int i = 0; i < txtFiles.length; i++) {
     if(!(((mouseX > (screen_width / 2 - screen_width / 8 + screen_width / 8)) || (mouseY > ((i*100)+100 + screen_height / 8))) || ((mouseX < screen_width / 2 - screen_width / 8) || (mouseY < (i*100)+100)))) // Open song
     {menu = 1; readMusic(txtFiles[i]); return;}
-  }
+    if(!(((mouseX > (screen_width / 2 - screen_width / 8 + 200 + 50)) || (mouseY > ((i*100)+110+50))) || ((mouseX < screen_width / 2 - screen_width / 8 + 200) || (mouseY < (i*100)+110)))) // Open song
+    {menu = 3; String [] m1 = match((txtFiles[i]), "myMusic");
+      if(m1!=null) {
+        menu = 3; deleteFile((txtFiles[i])); return;} 
+      }   
+    }
   }
 }
+// danny code TO HERE --------
 
 // check to see if a button has been pressed
 void Buttons(TuioObject tobj) {/*
@@ -298,13 +310,21 @@ void draw()
  
  if(menu == 0)
   {
+    // danny code FROM HERE --------    
+    logo = loadShape("SoundStampLogo.svg");
+    fill(255);
+    shape (logo, 0, 0, screen_width, 206);
+   // danny code to HERE --------    
     noFill();
     stroke(255);
 
     rect (screen_width / 2 - screen_width / 8, screen_height / 2 - screen_height / 8, screen_width / 8, screen_height / 8, 20);
+    fill(150);
     text ("Compose", screen_width / 2 - screen_width / 12, screen_height / 2 - screen_height / 18);
-   
+    noFill();
+    
     rect (screen_width / 2 - screen_width / 8, screen_height / 2 + screen_height / 32, screen_width / 8, screen_height / 8, 20);
+    
     text ("Learn", screen_width / 2 - screen_width / 13, screen_height / 2 + screen_width / 30 + screen_height / 32);
     
     rect (screen_width / 2 - screen_width / 8, screen_height / 2 + screen_height / 8 + screen_height / 16, screen_width / 8, screen_height / 8, 20);
@@ -314,7 +334,7 @@ void draw()
  if(menu == 3)
  { 
   findtxt();
-  s = loadShape("delete.svg");
+  delete = loadShape("delete.svg");
    noFill();
    stroke(255);
    rect (buttonX, buttonY, button_width, button_height, 7);
@@ -327,7 +347,7 @@ void draw()
     rect (screen_width / 2 - screen_width / 8, (i*100)+100, screen_width / 8, screen_height / 8, 20);
     fill(255);
     stroke(255);
-    shape (s, screen_width / 2 - screen_width / 8 + 200, (i*100)+110, 50, 50);
+    shape (delete, screen_width / 2 - screen_width / 8 + 200, (i*100)+110, 50, 50);
     fill(255);
     text (txtParsed, screen_width / 2 - screen_width / 12, (i*100)+100+screen_height/16);
    }
@@ -982,3 +1002,12 @@ class Data {
   }
  
 }
+// danny code FROM HERE --------
+void deleteFile(String filename) {
+  String txtFile = dataPath(filename);
+  File file = sketchFile(txtFile);
+  System.gc();
+  println(file);
+  boolean success = file.delete();
+}
+// danny code TO HERE --------
