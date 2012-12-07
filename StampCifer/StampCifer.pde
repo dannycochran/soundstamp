@@ -106,6 +106,7 @@ String [] txtFiles;
 //shapes
 PShape delete;
 PShape logo;
+PShape notes;
 
 void setup()
 {   
@@ -114,17 +115,17 @@ void setup()
   screen_height = displayHeight;
   size(screen_width,screen_height);
   width_scaling = (float) screen_width / 640;
-  staff_width = (float) 0.85 * screen_width;
+  staff_width = (float) 0.7 * screen_width;
   staff_height = (float) 0.9 * screen_height;
-  start_increment = (float) 0.25 * screen_width;
+  start_increment = (float) 0.05 * screen_width;
   y_increment = (float) 0.05 * screen_height;
   names_increment = (float) start_increment / 2;
   
   // button for playing music
   buttonX = (float) 510 * width_scaling; 
   buttonY = (float) staff_height / 4 / 12;
-  button_width = (float) 30 * width_scaling;
-  button_height = (float) staff_height / 2 / 12;
+  button_width = (float) 80 * width_scaling;
+  button_height = (float) staff_height / 2 / 6;
 
   background(0);
   noStroke();
@@ -157,11 +158,11 @@ void mousePressed() {
     if (menu == 1) {
        if(!(((mouseX > ( buttonX+button_width)) || (mouseY > ((staff_height / 8)*2 + button_height))) || ((mouseX < buttonX) || (mouseY < (staff_height / 8)*2)))) // Back Button
            {writeMusic();}
-       if(!(((mouseX > ( buttonX+button_width)) || (mouseY > ((staff_height / 8)*3 + button_height))) || ((mouseX < buttonX) || (mouseY < (staff_height / 8)*3)))) // Back Button
+       if(!(((mouseX > ( buttonX+button_width)) || (mouseY > ((staff_height / 8)*3 + button_height))) || ((mouseX < buttonX) || (mouseY < (staff_height / 8)*3)))) // Tempo Button
            {tempo += 20; if(tempo == 500) {tempo = 20;}}
-       if(!(((mouseX > ( buttonX+button_width)) || (mouseY > ((staff_height / 8)*4 + button_height))) || ((mouseX < buttonX) || (mouseY < (staff_height / 8)*4)))) // Back Button
+       if(!(((mouseX > ( buttonX+button_width)) || (mouseY > ((staff_height / 8)*5 + button_height))) || ((mouseX < buttonX) || (mouseY < (staff_height / 8)*5)))) // Instrument Button
            {instrument += 1; if (instrument ==128) {instrument = 0;}}
-        if(!(((mouseX > ( buttonX+button_width)) || (mouseY > ((staff_height / 8)*5 + button_height))) || ((mouseX < buttonX) || (mouseY < (staff_height / 8)*5)))) // Back Button
+        if(!(((mouseX > ( buttonX+button_width)) || (mouseY > ((staff_height / 8)*7 + button_height))) || ((mouseX < buttonX) || (mouseY < (staff_height / 8)*7)))) // Clear button
            {piece.clear();}
          }        
   if(!(((mouseX > ( buttonX+button_width)) || (mouseY > (buttonY + button_height))) || ((mouseX < buttonX) || (mouseY < buttonY)))) // Back Button
@@ -233,7 +234,7 @@ void draw()
 {
   // draw boxes to represent 12 different notes on a staff
   noFill();
-  stroke(50);
+  stroke(100);
   float rect_y = y_increment;
   for (int i = 0; i < 12; i++)
   {
@@ -250,16 +251,16 @@ void draw()
     rect (buttonX, buttonY + staff_height /8, button_width, button_height, 7);
     rect (buttonX, buttonY + (staff_height / 8)*2, button_width, button_height, 7);
     rect (buttonX, buttonY + (staff_height / 8)*3, button_width, button_height, 7);
-    rect (buttonX, buttonY + (staff_height / 8)*4, button_width, button_height, 7);
     rect (buttonX, buttonY + (staff_height / 8)*5, button_width, button_height, 7);
+    rect (buttonX, buttonY + (staff_height / 8)*7, button_width, button_height, 7);
 
     fill(255);
-    text ("Back", buttonX + button_width * 0.3, buttonY + button_width * 0.3);
-    text ("Play", buttonX + button_width * 0.3, buttonY + staff_height /8 + button_width * 0.3);
-    text ("Save", buttonX + button_width * 0.3, buttonY + (staff_height / 8)*2 + button_width * 0.3);
-    text ("Set Tempo", buttonX + button_width * 0.3, buttonY + (staff_height / 8)*3 + button_width * 0.3);
-    text ("Set Instrument", buttonX + button_width * 0.3, buttonY + (staff_height / 8)*4 + button_width * 0.3);
-    text ("Clear", buttonX + button_width * 0.3, buttonY + (staff_height / 8)*5 + button_width * 0.3);
+    text ("Back", buttonX + button_width * 0.1, buttonY + button_width * 0.2);
+    text ("Play", buttonX + button_width * 0.1, buttonY + staff_height /8 + button_width * 0.2);
+    text ("Save", buttonX + button_width * 0.1, buttonY + (staff_height / 8)*2 + button_width * 0.2);
+    text ("Set Tempo", buttonX + button_width * 0.1, buttonY + (staff_height / 8)*3 + button_width * 0.2);
+    text ("Set Instrument", buttonX + button_width * 0.1, buttonY + (staff_height / 8)*5 + button_width * 0.2);
+    text ("Clear", buttonX + button_width * 0.1, buttonY + (staff_height / 8)*7 + button_width * 0.2);
   }
   
   noFill();
@@ -327,19 +328,17 @@ void draw()
     noFill();
     stroke(255);
     // danny code from here // 
-    rectMode(CENTER);
-    textAlign(CENTER);
-    rect (screen_width/2, screen_height / 2 - 60, screen_width / 8, screen_height / 8, 20);
-    fill(150);
-    text ("Compose", screen_width / 2, screen_height / 2 - 60 );
+    rect (screen_width/2-screen_width/16, screen_height / 2 - screen_height / 16 - 60, screen_width / 8, screen_height / 8, 20);
+    fill(200);
+    text ("Compose", screen_width / 2 - screen_height / 20, screen_height / 2 - 60 );
     noFill();
     stroke(255);
     
-    rect (screen_width/2, screen_height / 2 + (screen_height/8) - 40, screen_width / 8, screen_height / 8, 20);
-    text ("Learn", screen_width / 2, screen_height / 2 + (screen_height/8)-40);
+    rect (screen_width/2-screen_width/16, screen_height / 2 - screen_height / 16 + (screen_height/8) - 40, screen_width / 8, screen_height / 8, 20);
+    text ("Learn", screen_width / 2 - screen_height / 20, screen_height / 2 + (screen_height/8)-40);
     
-    rect (screen_width/2, screen_height / 2 + (screen_height/8)*2 - 20, screen_width / 8, screen_height / 8, 20);
-    text ("Library", screen_width / 2, screen_height / 2 + (screen_height/8)*2-20);
+    rect (screen_width/2-screen_width/16, screen_height / 2 - screen_height / 16 + (screen_height/8)*2 - 20, screen_width / 8, screen_height / 8, 20);
+    text ("Library", screen_width / 2 - screen_height / 20, screen_height / 2 + (screen_height/8)*2-20);
     // danny code to here // 
   }
   
@@ -635,7 +634,7 @@ int remap_pitches(int p)
 
 int checkRegion(TuioObject tobj)
 {
-// check in which region of the screen the object is in 
+  // check in which region of the screen the object is in 
   if(tobj.getScreenX(screen_width) >= start_increment && tobj.getScreenX(screen_width) <= start_increment + staff_width)
   {
     int partitions = piece.size() + 1; // screen is divided by number of music elements in the piece plus an empty region to add an additional element
@@ -643,7 +642,7 @@ int checkRegion(TuioObject tobj)
     float xregion = (float) staff_width / screen_width / partitions; // size of the equal regions in x coordinates
     float objcor = (float) regress(tobj.getScreenX(screen_width), start_increment, start_increment + staff_width, 0, 1) / xregion;
     int objregion = floor(objcor); // index of region where the object is
-    println("At "+ tobj.getScreenX(screen_width) + " and Region is " + objregion);
+   // println("At "+ tobj.getScreenX(screen_width) + " and Region is " + objregion);
     return objregion;
   }
   else { println("Not found"); return -1;}
